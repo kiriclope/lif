@@ -6,8 +6,8 @@
 #define L 2.0*M_PI
 #define PULSE 40
 #define IF_PULSE false
-#define IF_Nk true
-#define IF_Iext true
+#define IF_Nk false
+#define IF_Iext false
 #define PrtrPop 1
 
 #define Vr  0. // Membrane Resting Potential
@@ -100,7 +100,7 @@ int main(int argc , char** argv) {
   // Connectivity Matrix
   ///////////////////////////////////////////////////////////////////
 
-  string Jpath = "../" ;
+  string Jpath = "../../" ;
   Create_Path(nbpop,Jpath,N,K) ;
   CreateDir_SpaceCrec(nbpop,Jpath,N,Crec) ;
 
@@ -315,9 +315,10 @@ int main(int argc , char** argv) {
 	  // 	  Isyn[j][i][IdPost[l]-Cpt[j]] += J[j][i] ; 
 
 	  for(j=0;j<nbpop;j++) // i Pres to j Post => Jji 
-	    for (l=idxPostSpace[k+Cpt[i]]; l<idxPostSpace[k+Cpt[i]]+nbPostSpace[k+Cpt[i]]; l++) 
-	      if(IdPostSpace[l]>=Cpt[j] && IdPostSpace[l]<Cpt[j+1]) 
-		Isyn[j][i][IdPostSpace[l]-Cpt[j]] += J[j][i] ; 
+	    if(J[j][i]!=0)
+	      for (l=idxPostSpace[k+Cpt[i]]; l<idxPostSpace[k+Cpt[i]]+nbPostSpace[k+Cpt[i]]; l++) 
+		if(IdPostSpace[l]>=Cpt[j] && IdPostSpace[l]<Cpt[j+1]) 
+		  Isyn[j][i][IdPostSpace[l]-Cpt[j]] += J[j][i] ; 
 	  
 	  //Updating ISI  
 	  if(t>=Tst && t<=Tst+Tl)

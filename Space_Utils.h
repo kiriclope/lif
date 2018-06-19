@@ -1,7 +1,7 @@
 #ifndef __SPACEUTILS__
 #define __SPACEUTILS__
 
-#define PROFILE 2
+#define PROFILE 1
 #define BL .25
 #define m0 1E-2
 

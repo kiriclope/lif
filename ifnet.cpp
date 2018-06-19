@@ -4,7 +4,7 @@
 #include "Net_Utils.h"
 
 #define IF_Nk false
-#define IF_Iext true
+#define IF_Iext false
 #define ndI 1
 
 #define Vr 0. // Membrane Resting Potential
@@ -79,7 +79,7 @@ int main(int argc , char** argv) {
   // Connectivity Matrix
   ///////////////////////////////////////////////////////////////////    
  
-  string Jpath = "../" ;
+  string Jpath = "../../" ;
   Create_Path(nbpop,Jpath,N,K) ;
   int *nbPost ;
   unsigned long  int *idxPost ;
