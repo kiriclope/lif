@@ -104,6 +104,7 @@ void Set_Parameters(int argc , char** argv, string &dir, int &nbpop, int &N, dou
     getIextBL(nbpop,dir,IextBL) ;
     Iext = new double [nbpop] ;      
  
+    cout << "Iext : " ;
     if(!argIext) {
       for(int i=0;i<nbpop;i++) {
 	Iext[i] = IextBL[i] ;
@@ -112,7 +113,6 @@ void Set_Parameters(int argc , char** argv, string &dir, int &nbpop, int &N, dou
       cout << endl ;
     }
     else {
-      cout << "Iext : " ;
       for(int i=0;i<nbpop;i++) {
 	Iext[i] = (double) atof(argv[i+6]) ;
 	cout << Iext[i] << " " ;

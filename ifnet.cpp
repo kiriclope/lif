@@ -18,13 +18,13 @@ int main(int argc , char** argv) {
   
   Set_Parameters(argc,argv,dir,nbpop,N,K,g,Iext,IextBL) ; 
 
+  if(IF_Prtr) {
+    ndI = min(nbpop-1,PrtrPop) ;
+    Iext[ndI] += (double) atof(argv[6]) ;
+  }
+
   if(IF_RING)
     getCrecCff(argv,nbpop,Crec,Cff) ;
-
-  cout << "External Inputs : " ;
-  for(int i=0;i<nbpop;i++) 
-    cout << Iext[i] << " " ;
-  cout << endl ;
   
   cout << "Synaptic Strength : " << endl ;
   Import_Connectivity_Parameters(nbpop,J,dir) ; 
@@ -77,9 +77,12 @@ int main(int argc , char** argv) {
     CreateDir_SpaceCff(nbpop,path,N,Cff) ;
   }
 
+  string popList[4] = {"E","I","S","V"} ;  
+  if(nbpop==1) 
+    popList[0] = "I" ;
+
   if(IF_Prtr) {
-    ndI = min(nbpop-1,PrtrPop) ;
-    cout <<"Perturbed Pop " << ndI << " | Input "<< Iext[ndI]-IextBL[ndI] << endl ;
+    cout <<"Perturbed Pop " << popList[ndI] << " | Input "<< Iext[ndI]-IextBL[ndI] << endl ;
     CreateDir_Iext(nbpop,ndI,Iext[ndI],path) ;
   }
 
@@ -130,8 +133,8 @@ int main(int argc , char** argv) {
       Isyn[i][j].resize(nbN[i]) ;    
   }
   
-  if(IF_Prtr & !IF_RING)
-    External_Input(nbpop,N,nbN,K,100,Iext,IextBL,ndI,Jext,path) ;
+  // if(IF_Prtr & !IF_RING)
+  //   External_Input(nbpop,N,nbN,K,100,Iext,IextBL,ndI,Jext,path) ;
   if(IF_Prtr & IF_RING)
     External_Input(nbpop,N,nbN,K,Cff,Iext,IextBL,ndI,Jext,path) ;
 
@@ -175,11 +178,11 @@ int main(int argc , char** argv) {
     cout << unif(gen) << " " ;
   cout << endl ;
 
-  // for(i=0;i<nbpop;i++) 
-  //   for(k=0;k<nbN[i];k++) {
-  //     Volt[i][k] = gaussian(gen) ;
-  //     Isyntot[i][k] = gaussian(gen) ;
-  //   }
+  for(i=0;i<nbpop;i++) 
+    for(k=0;k<nbN[i];k++) {
+      Volt[i][k] = gaussian(gen) ;
+      Isyntot[i][k] = gaussian(gen) ;
+    }
   
   ///////////////////////////////////////////////////////////////////    
   // Main Loop
