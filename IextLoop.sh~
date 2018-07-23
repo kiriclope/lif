@@ -27,22 +27,17 @@ fi
 
 export $LANG=en_US
 
-# Imin=$I 
-Imin=$S
+Imin=$I 
 
 echo Imin$Imin dI$dI Imax$Imax
-for S in $(seq $Imin $dI $Imax); do
+for I in $(seq $Imin $dI $Imax); do
 
     DIRECTORY=$(printf "../%dpop/Network/%s/N%d/K%d/g%.2f/Prtr_I/Iext_I%.4f/" "$nbpop" "$dir" "$N" "$k" "$g" "$I")
     
     if [ ! -d "$DIRECTORY" ]; then
         
-	# if [ "$nbpop" = 4 ]; then 
-	#     screen -dmS IF${nbpop}pop${dir}N${N}K${k}g${g}I${I} ./ifnetIext.out $dir $nbpop $N $k $dt $duration $Tst $Tw $g $E $I $S $V $Tme $Tmi $Tms $Tmv
-	# fi
-
 	if [ "$nbpop" = 4 ]; then 
-	    screen -dmS IF${nbpop}pop${dir}N${N}K${k}g${g}I${I} ./ifnetIextSOM.out $dir $nbpop $N $k $dt $duration $Tst $Tw $g $E $I $S $V $Tme $Tmi $Tms $Tmv
+	    screen -dmS IF${nbpop}pop${dir}N${N}K${k}g${g}I${I} ./ifnetIext.out $dir $nbpop $N $k $dt $duration $Tst $Tw $g $E $I $S $V $Tme $Tmi $Tms $Tmv
 	fi
 	
 	if [ "$nbpop" = 3 ]; then 

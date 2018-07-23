@@ -12,7 +12,7 @@ else
     read dir nbpop N k dt duration Tst Tw g <<<  "$1 $2 $3 $4 $5 $6 $7 $8 $9"
 
     if [ "$nbpop" = 4 ]; then 
-	read E I S V Tme Tmi Tms Tmv CrecE CrecI CrecS CrecV Cff dCff Cffmax <<< "${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24}"
+	read E I S V Tme Tmi Tms Tmv CrecE CrecI CrecS CrecV Cff dCrecE CrecEmax <<< "${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24}"
     fi
 
     if [ "$nbpop" = 3 ]; then 
@@ -41,7 +41,7 @@ for CrecE in $(seq $CrecEmin $dCrecE $CrecEmax); do
     if [ ! -d "$DIRECTORY" ]; then
         
 	if [ "$nbpop" = 4 ]; then 
-	    screen -dmS IF${nbpop}pop${dir}N${N}K${k}g${g}I${I} ./GaussIext.out $dir $nbpop $N $k $dt $duration $Tst $Tw $g $E $I $S $V $Tme $Tmi $Tms $Tmv $CrecE $CrecI $CrecS $CrecV $Cff
+	    screen -dmS IF${nbpop}pop${dir}N${N}K${k}g${g}I${I} ./a.out $dir $nbpop $N $k $dt $duration $Tst $Tw $g $E $I $S $V $Tme $Tmi $Tms $Tmv $CrecE $CrecI $CrecS $CrecV $Cff
 	fi
 
 	# if [ "$nbpop" = 4 ]; then 

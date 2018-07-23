@@ -1,13 +1,6 @@
 #ifndef __SPACEUTILS__
 #define __SPACEUTILS__
 
-#define PROFILE 1
-#define BL .25
-#define m0 1E-2
-
-#define IF_OPSIN false
-#define OpsPb 1.
-
 ///////////////////////////////////////////////////////////////////////
 
 double DeltaFunc(double X, double Y) {
@@ -21,9 +14,30 @@ double Gaussian_1D(double mu, double sigma) {
   return exp(-mu*mu/2./sigma/sigma)/sqrt(2.*M_PI)/sigma ;
 }
 
+
+///////////////////////////////////////////////////////////////////    
+
+double ShortestDistOnCirc(double point0, double point1) {
+  double dist = 0.0;
+  dist = abs(point0 - point1);
+  dist = fmod(dist, L);
+  if(dist > 0.5*L)
+    dist = L*(1.0 - dist);
+  
+  return dist;
+}
+
+///////////////////////////////////////////////////////////////////    
+
+double PeriodicGaussian(double xa, double xb, double varianceOfGaussian) {
+  double distX = 0.0; //ShortestDistOnCirc(xa, xb, patchSize);
+  distX = ShortestDistOnCirc(xa, xb) ;
+  return Gaussian_1D(distX, varianceOfGaussian);
+}
+
 ///////////////////////////////////////////////////////////////////////
 
-double Wrapped_Gaussian(double mu, double sigma, int klim, double L) {
+double Wrapped_Gaussian(double mu, double sigma, int klim) {
   double sum = 0 ; 
   for(int k=-klim;k<=klim;k++)
     sum += Gaussian_1D(L*mu+L*(double)k,sigma) ;
@@ -32,11 +46,23 @@ double Wrapped_Gaussian(double mu, double sigma, int klim, double L) {
 
 ///////////////////////////////////////////////////////////////////////
 
-double Wrapped_Exp(double mu, double sigma, int klim, double L) {
+double Wrapped_Exp(double mu, double sigma, int klim) {
   double sum = 0 ; 
   for(int k=-klim;k<=klim;k++)
     sum += exp( -fabs( L* ( mu+(double)k ) ) / sigma ) ;
   return sum ;
+}
+
+///////////////////////////////////////////////////////////////////////
+
+void getCrecCff(char** argv, int nbpop, double *&Crec, double &Cff) {
+
+  Crec = new double [nbpop] ; 
+  for(int i=0;i<nbpop;i++) 
+    Crec[i] = (double) atof(argv[nbpop+6+i]) ;
+  
+  Cff = (double) atof(argv[2*nbpop+6]) ; // variance of the wrapped external input
+
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -193,7 +219,7 @@ void CreateDir_SpaceCff(int nbpop,string &path,int N,double Cff) {
 
 ///////////////////////////////////////////////////////////////////////
 
-void Spatial_Connection_Probability_1D(int nbpop,int N,int* Nk,vector<int> &Cpt,double K,int klim,double* Crec,double **&c,double L) {
+void Spatial_Connection_Probability_1D(int nbpop,int N,int* Nk,vector<int> &Cpt,double K,int klim,double* Crec,double **&c) {
 
   double **ix ;
   ix = new double*[nbpop] ;      
@@ -275,7 +301,7 @@ void Spatial_Connection_Probability_1D(int nbpop,int N,int* Nk,vector<int> &Cpt,
       for(int k=0;k<Nk[i];k++)
     	for(int j=0;j<nbpop;j++) {
     	  for(int l=0;l<Nk[j];l++) {
-	    c[k+Cpt[i]][l+Cpt[j]] = Wrapped_Gaussian(X[i][k]-X[j][l],Crec[j],klim,L) ;
+	    c[k+Cpt[i]][l+Cpt[j]] = Wrapped_Gaussian(X[i][k]-X[j][l],Crec[j],klim) ;
     	    sum[i][j][k] += c[k+Cpt[i]][l+Cpt[j]] ;
 	  }
 	  for(int l=0;l<Nk[j];l++)
@@ -290,7 +316,7 @@ void Spatial_Connection_Probability_1D(int nbpop,int N,int* Nk,vector<int> &Cpt,
       for(int k=0;k<Nk[i];k++)
     	for(int j=0;j<nbpop;j++) {
     	  for(int l=0;l<Nk[j];l++) {
-	    c[k+Cpt[i]][l+Cpt[j]] = Wrapped_Exp(X[i][k]-X[j][l],Crec[j],klim,L) ;
+	    c[k+Cpt[i]][l+Cpt[j]] = Wrapped_Exp(X[i][k]-X[j][l],Crec[j],klim) ;
     	    sum[i][j][k] += c[k+Cpt[i]][l+Cpt[j]] ;
 	  }
 	  for(int l=0;l<Nk[j];l++)
@@ -303,7 +329,7 @@ void Spatial_Connection_Probability_1D(int nbpop,int N,int* Nk,vector<int> &Cpt,
   delete [] sum ;  
 }
 
-void Spatial_Connection_Probability_1D_Ka(int nbpop,int N,int* Nk,vector<int> &Cpt,double *K,int klim,double* Crec,double** &c,double L) {
+void Spatial_Connection_Probability_1D_Ka(int nbpop,int N,int* Nk,vector<int> &Cpt,double *K,int klim,double* Crec,double** &c) {
 
   double **ix ;
   ix = new double*[nbpop] ;      
@@ -357,7 +383,7 @@ void Spatial_Connection_Probability_1D_Ka(int nbpop,int N,int* Nk,vector<int> &C
 	  if(Crec[j]==0)
 	    c[k+Cpt[i]][l+Cpt[j]] = K[j]/(double)Nk[j] * DeltaFunc(X[i][k],X[j][l]) ;
 	  else {
-	    c[k+Cpt[i]][l+Cpt[j]] = Wrapped_Gaussian(X[i][k]-X[j][l],Crec[j],klim,L) ;
+	    c[k+Cpt[i]][l+Cpt[j]] = Wrapped_Gaussian(X[i][k]-X[j][l],Crec[j],klim) ;
 	    sum[i][j][k] = sum[i][j][k] + c[k+Cpt[i]][l+Cpt[j]] ;
 	  }
 	}
@@ -376,7 +402,7 @@ void Spatial_Connection_Probability_1D_Ka(int nbpop,int N,int* Nk,vector<int> &C
 
 ///////////////////////////////////////////////////////////////////////
 
-void Spatial_Connection_Probability_1Dab(int nbpop,int N,int* Nk,vector<int> &Cpt,double K,int klim,double **Crec,double ** &c,double L) {
+void Spatial_Connection_Probability_1Dab(int nbpop,int N,int* Nk,vector<int> &Cpt,double K,int klim,double **Crec,double ** &c) {
 
   double **ix ;
   ix = new double*[nbpop] ;      
@@ -427,7 +453,7 @@ void Spatial_Connection_Probability_1Dab(int nbpop,int N,int* Nk,vector<int> &Cp
     for(int k=0;k<Nk[i];k++)
       for(int j=0;j<nbpop;j++) {
  	for(int l=0;l<Nk[j];l++) {
-	  c[k+Cpt[i]][l+Cpt[j]] = Wrapped_Gaussian(X[i][k]-X[j][l],Crec[i][j],klim,L) ;
+	  c[k+Cpt[i]][l+Cpt[j]] = Wrapped_Gaussian(X[i][k]-X[j][l],Crec[i][j],klim) ;
 	  sum[i][j][k] += c[k+Cpt[i]][l+Cpt[j]] ;
 	}
 	for(int l=0;l<Nk[j];l++) 
@@ -442,7 +468,7 @@ void Spatial_Connection_Probability_1Dab(int nbpop,int N,int* Nk,vector<int> &Cp
 //////////////////////////////////////////////////////////////////
 
 
-void Spatial_Connection_Probability_2D(int nbpop,int N,int* Nk,vector<int> &Cpt,double K,int klim,double* Crec,double** &c,double L) {
+void Spatial_Connection_Probability_2D(int nbpop,int N,int* Nk,vector<int> &Cpt,double K,int klim,double* Crec,double** &c) {
 
   double **ix ;
   ix = new double*[nbpop] ;      
@@ -541,7 +567,7 @@ void Spatial_Connection_Probability_2D(int nbpop,int N,int* Nk,vector<int> &Cpt,
       for(int k=0;k<Nk[i];k++)
 	for(int j=0;j<1;j++) 
 	  for(int l=0;l<Nk[j];l++) {
-	    c[k+Cpt[i]][l+Cpt[j]] = Wrapped_Gaussian(X[i][k]-X[j][l],Crec[j],klim,L)*Wrapped_Gaussian(Y[i][k]-Y[j][l],Crec[j],klim,L) ;
+	    c[k+Cpt[i]][l+Cpt[j]] = Wrapped_Gaussian(X[i][k]-X[j][l],Crec[j],klim)*Wrapped_Gaussian(Y[i][k]-Y[j][l],Crec[j],klim) ;
 	    sum[i][j][k] += c[k+Cpt[i]][l+Cpt[j]] ;
 	  }
 
@@ -564,7 +590,7 @@ void Spatial_Connection_Probability_2D(int nbpop,int N,int* Nk,vector<int> &Cpt,
 
 ///////////////////////////////////////////////////////////////////////
 
-void External_Input(int nbpop,int N,int* Nk,double K,double Cff,double* Iext,double *IextBL,int ndI,vector<vector<double> > &Jext,double L,string path) {
+void External_Input(int nbpop,int N,int* Nk,double K,double Cff,double* Iext,double *IextBL,int ndI,vector<vector<double> > &Jext,string path) {
 
   cout << "External Input" << endl ;
 
@@ -637,35 +663,27 @@ void External_Input(int nbpop,int N,int* Nk,double K,double Cff,double* Iext,dou
     Pb = OpsPb ;
 
 
-  string strIdxFile = path + "/IdxFile.txt" ;
-  ofstream fIdxFile(strIdxFile.c_str(), ios::out | ios::ate);
+  /* string strIdxFile = path + "/IdxFile.txt" ; */
+  /* ofstream fIdxFile(strIdxFile.c_str(), ios::out | ios::ate); */
 
   for(int i=0;i<nbpop;i++) {
     for(int j=0;j<Nk[i];j++) {
       
-      /* if(i==ndI && BASELINE==0) // Modulated input only onto I */
-      /* Jext[i][j] = p*Wrapped_Gaussian(X[i][j]-X[i][Nk[i]/2-1],Cff,100,L) ; */
-      /* if(i==ndI && BASELINE==0 && abs(2.*M_PI*(X[i][j]-X[i][Nk[i]/2]))<=Cff) // RectIn */
-      /* 	Jext[i][j] = p ; */
+      if( i==ndI && BASELINE==0 && abs(X[i][j]-X[i][Nk[i]/2-1])<=Cff/L/2 && unif(gen)<=Pb ) 
+	
+	if(IF_GAUSS) 
+	  /* Jext[i][j] = p*Wrapped_Gaussian(X[i][j]-X[i][Nk[i]/2],Cff,100,L) ;	 */
+	  Jext[i][j] = p*PeriodicGaussian(X[i][j],X[i][Nk[i]/2],Cff) ; 
+	else 
+	  Jext[i][j] = p ;
       
-      /* if(i==ndI && BASELINE==0) // Modulated input only onto I */
-      /* if( i==ndI && BASELINE==0 && abs(X[i][j]-X[i][Nk[i]/2-1])<=Cff/L && unif(gen)<=5 ) // Truncated Gaussian */
-      if( i==ndI && BASELINE==0 && abs(X[i][j]-X[i][Nk[i]/2-1])<=Cff/L/2 && unif(gen)<=Pb ) {// Truncated Gaussian
-	if(IF_OPSIN)
-	  Jext[i][j] = p ;
-	else
-	  Jext[i][j] = p ;
-    	fIdxFile << j << " " ;
-	/* Jext[i][j] = sqrt(K)*p*Wrapped_Gaussian(X[i][j]-X[i][Nk[i]/2-1],Cff,100,L) ; */
-	/* Jext[i][j] = p*Wrapped_Gaussian(X[i][j]-X[i][Nk[i]/2],Cff,100,L) ; */
-      } 
       else
-	Jext[i][j] = 0. ;
+	Jext[i][j] = 0. ;      
     }
+  
+    /* fIdxFile.close() ; */
   }
-  
-  fIdxFile.close() ;
-  
+
   if( BASELINE==0 ) {
     cout << "Jext " ;
     for(int i=0;i<nbpop;i++) {
@@ -674,99 +692,6 @@ void External_Input(int nbpop,int N,int* Nk,double K,double Cff,double* Iext,dou
       cout << endl ;
     }
   }
-
-  delete [] ix ;
-  delete [] X ;
-}
-
-//////////////////////////////////////////////////////////////////
-
-void External_Input_Ka(int nbpop,int N,int* Nk,double *K,double Cff,double* Iext,int ndI,vector<vector<double> > &Jext,double L) {
-
-  cout << "External Input" << endl ;
-
-  double **ix ;
-  ix = new double*[nbpop] ;      
-  for(int i=0;i<nbpop;i++)
-    ix[i] = new double[Nk[i]] ;
-
-  double **X ;
-  X = new double*[nbpop] ;      
-  for(int i=0;i<nbpop;i++)
-    X[i] = new double[Nk[i]] ;
-
-  for(int i=0;i<nbpop;i++)
-    for(int k=0;k<Nk[i];k++) {
-      ix[i][k] = fmod( double(k), double( Nk[i]) ) ;
-      X[i][k] = ix[i][k]/( double( Nk[i]) ) ;
-    }
-
-  cout << "ix " ;
-  for(int k=0;k<10;k++) 
-    cout << ix[0][k] << " " ;
-  cout << endl ;
-  for(int k=0;k<10;k++) 
-    cout << ix[0][Nk[0]-1-k] << " " ;
-  cout << endl ;
-
-  cout << "X " ;
-  for(int k=0;k<10;k++) 
-    cout << X[0][k] << " " ;
-  cout << endl ;
-  for(int k=0;k<10;k++) 
-    cout << X[0][Nk[0]-1-k] << " " ;
-  cout << endl ;
-  
-  double p=1. ;
-  bool BASELINE=0 ;
-  if(abs(Iext[ndI]-m0*sqrt(K[ndI])*BL)<=m0) {
-    cout << "Baseline => No Input Modulation : " << endl ;
-    BASELINE=1 ;
-  }
-
-  vector<double> IextBL(nbpop) ;
-  if(nbpop==1)
-    IextBL[0] = BL*sqrt(K[0])*m0 ;
-  else{
-    IextBL[0] = Iext[0] ;
-    IextBL[1] = BL*sqrt(K[1])*m0 ;
-  }
-
-  p = Iext[ndI] - IextBL[ndI] ;
-
-  cout << "Baseline " ;
-  for(int i=0;i<nbpop;i++)
-    cout << IextBL[i]/sqrt(K[i])/m0 << " " ;
-  cout << endl ;
-
-  if(BASELINE==0)  {
-    cout << "Perturbation " ;
-    for(int i=0;i<nbpop;i++)
-      cout << Iext[i]/sqrt(K[i])/m0 << " " ;
-  }
-
-  random_device rd ;
-  default_random_engine gen( rd() ) ;
-  uniform_real_distribution<double> unif(0,1) ;
-
-  for(int i=0;i<nbpop;i++) {
-    for(int j=0;j<Nk[i];j++) {      
-      if(i==ndI && BASELINE==0) // Modulated input only onto I
-      	Jext[i][j] = p*Wrapped_Gaussian(X[i][j]-X[i][Nk[i]/2-1],Cff,100,L) ;
-      /* if(i==ndI && BASELINE==0 && abs(X[i][j]-X[i][Nk[i]/2-1])<=Cff/L) // RectIn */
-      /* 	Jext[i][j] = p ; */
-      /* if(i==ndI && BASELINE==0 && abs(X[i][j]-X[i][Nk[i]/2-1])<=4.*Cff/L && unif(gen)<=5 ) // Truncated Gaussian */
-      /* 	Jext[i][j] = p*Wrapped_Gaussian(X[i][j]-X[i][Nk[i]/2-1],Cff,100,L) ; */
-      else
-	Jext[i][j] = 0. ;
-    }
-  }
-  
-  for(int i=0;i<nbpop;i++) {
-    for(int j=0;j<10;j++) 
-      cout << Jext[i][j] << " " ;
-    cout << endl ;
-  }
   
   delete [] ix ;
   delete [] X ;
@@ -774,7 +699,7 @@ void External_Input_Ka(int nbpop,int N,int* Nk,double *K,double Cff,double* Iext
 
 ///////////////////////////////////////////////////////////////////////
 
-void External_Input2D(int nbpop,int N,int* Nk,double K,double Cff,double* Iext,int ndI,vector<vector<double> > &Jext,double L) {
+void External_Input2D(int nbpop,int N,int* Nk,double K,double Cff,double* Iext,double *IextBL,int ndI,vector<vector<double> > &Jext) {
 
   cout << "External Input" << endl ;
 
@@ -841,17 +766,9 @@ void External_Input2D(int nbpop,int N,int* Nk,double K,double Cff,double* Iext,i
   
   double p=1. ;
   bool BASELINE=0 ;
-  if(abs(Iext[ndI]-m0*sqrt(K)*BL)<=0.0001) {
+  if(abs(Iext[ndI]-IextBL[ndI])<=0.0001) {
     cout << "Baseline => No Input Modulation : " << endl ;
     BASELINE=1 ;
-  }
-
-  vector<double> IextBL(nbpop) ;
-  if(nbpop==1)
-    IextBL[0] = BL*sqrt(K)*m0 ;
-  else{
-    IextBL[0] = Iext[0] ;
-    IextBL[1] = BL*sqrt(K)*m0 ;
   }
 
   p = Iext[ndI] - IextBL[ndI] ;
@@ -882,7 +799,7 @@ void External_Input2D(int nbpop,int N,int* Nk,double K,double Cff,double* Iext,i
       /* if(i==ndI && BASELINE==0 && (X[i][j]-.5) <= 4*Cff/L && Y[i][j]==Y[i][0]  && unif(gen)<=5 ) //Truncated Gaussian */
       /* 	Jext[i][j] = p*Wrapped_Gaussian(X[i][j]-.5,Cff,100,L) ; */
       if(i==ndI && BASELINE==0 && (X[i][j]-.5)*(X[i][j]-.5)/(4.*Cff/L)/(4.*Cff/L) + (Y[i][j]-.5)*(Y[i][j]-.5)/(4.*Cff/L)/(4.*Cff/L)*10.*10. <= 1. && unif(gen)<=5 ) //Truncated Gaussian
-      	Jext[i][j] = p*Wrapped_Gaussian(X[i][j]-.5,Cff,100,L)*Wrapped_Gaussian(Y[i][j]-.5,Cff/10.,100,L) ;
+      	Jext[i][j] = p*Wrapped_Gaussian(X[i][j]-.5,Cff,100)*Wrapped_Gaussian(Y[i][j]-.5,Cff/10.,100) ;
       /* if(i==ndI && BASELINE==0 && sqrt( (X[i][j]-.5)*(X[i][j]-.5) + (Y[i][j]-.5)*(Y[i][j]-.5) ) <= 4.*Cff/L && unif(gen)<=5 ) //Truncated Gaussian */
       /* 	Jext[i][j] = p*Wrapped_Gaussian(X[i][j]-.5,Cff,100,L)*Wrapped_Gaussian(Y[i][j]-.5,Cff,100,L) ; */
       // Jext[i][j] = p ;

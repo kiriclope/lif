@@ -3,7 +3,7 @@
 #include "Matrix_Utils.h"
 
 #define IF_Nk true
-#define IF_MATRIX false
+#define IF_MATRIX true
 
 using namespace::std ;
 
@@ -23,7 +23,7 @@ int main(int argc , char** argv) {
   // Path
   ///////////////////////////////////////////////////////////////////    
 
-  string path = "../" ;
+  string path = "../../" ;
   Create_Path(nbpop,path,N,K) ;
 
   ///////////////////////////////////////////////////////////////////    

@@ -1,9 +1,6 @@
 #ifndef __MATRIXUTILS__
 #define __MATRIXUTILS__
 
-using namespace::std ;
-
-
 ///////////////////////////////////////////////////////////////////    
 
 void Create_Path(int nbpop,string &path,int N,double K) {
@@ -95,7 +92,7 @@ void Save_Param(int nbpop,string path,double K,int* &Nk,vector<vector<double> > 
 
 ///////////////////////////////////////////////////////////////////    
 
-void NumberPres(int nbpop,string path,int* &Nk,vector<vector<vector<int> > > &nbPreSab,bool IF_Nk) {
+void NumberPres(int nbpop,string path,int* &Nk,vector<vector<vector<int> > > &nbPreSab) {
   
   vector<string> List(4) ;
   List[0] = 'E' ;
@@ -144,8 +141,8 @@ void CheckPres(int nbpop,string path, int* &Nk,vector<vector<vector<int> > > &nb
       meanPreS=0 ;
       for(int k=0;k<Nk[i];k++)
 	meanPreS += nbPreSab[i][j][k] ;
-      cout << meanPreS/(double)Nk[i] << " " ;      
-      fnbPreSab << meanPreS/(double)Nk[i] << " " ;
+      cout << meanPreS/(double)Nk[i] << " " ; 
+      fnbPreSab << meanPreS/(double)Nk[i] << " " ; 
     }
   cout << endl ;
 
@@ -154,7 +151,7 @@ void CheckPres(int nbpop,string path, int* &Nk,vector<vector<vector<int> > > &nb
 }
 ///////////////////////////////////////////////////////////////////    
 
-void WritetoFile(string path,int N,vector<int> &IdPost,vector<int> &nbPost,vector<unsigned long int> &idxPost,bool IF_Nk) {
+void WritetoFile(string path,int N,vector<int> &IdPost,vector<int> &nbPost,vector<unsigned long int> &idxPost) {
 
   cout <<" Writing to Files :" << endl ;
 

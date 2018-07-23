@@ -1,15 +1,8 @@
 #include "librairies.h"
+#include "GlobalVars.h"
+#include "Net_Utils.h"
 #include "Matrix_Utils.h"
 #include "Space_Utils.h"
-#include "Net_Utils.h"
-
-#define IF_Nk false
-#define IF_Iext false
-#define ndI 1
-
-#define Vr 0. // Membrane Resting Potential
-// #define Vth 1. // Voltage Threshold
-#define Vpeak 20. // Spikes Peak
 
 clock_t t1=clock();
 
@@ -18,49 +11,15 @@ int main(int argc , char** argv) {
   ///////////////////////////////////////////////////////////////////    
   // parameters 
   ///////////////////////////////////////////////////////////////////    
-
+  
   string dir ;
-  int nbpop,N ;
-  double K,duration,dt,Tst,Tw,**J,**Tsyn,g,*Iext,*IextBL;
+  int nbpop, N, ndI;
+  double K, **J, **Tsyn, g, *Iext, *IextBL, *Crec, Cff ;
   
-  Set_Parameters(argc,argv,dir,nbpop,N,K,duration,dt,Tst,Tw,g,Iext,IextBL) ;  
+  Set_Parameters(argc,argv,dir,nbpop,N,K,g,Iext,IextBL) ; 
 
-  vector<double> Vth(nbpop) ;
-  for(int i=0;i<nbpop;i++) 
-    Vth[i] = 1. ;
-
-  ///////////////////////////////////////////////////////////////////    
-  
-  cout << "Membrane Time Constantes : " << endl ;
-  double *Tm = new double [nbpop]() ;
-  for(int i=0;i<nbpop;i++)
-    Tm[i] = 10. ;
-  
-  double *Cst = new double [nbpop]() ;
-  if(argv[nbpop+10] != NULL) 
-    for(int i=0;i<nbpop;i++) 
-      Tm[i] = (double) atof(argv[i+10+nbpop]) ;
-  
-  for(int i=0;i<nbpop;i++) 
-    Cst[i] = exp(-dt/Tm[i]) ;
-
-  for(int i=0;i<nbpop;i++) 
-    cout << Tm[i] << " " ;
-  cout << endl ;
-
-  ///////////////////////////////////////////////////////////////////    
-  
-  cout << "Synaptic Time Constantes : " << endl ;
-  Import_Synaptic_Parameters(nbpop,Tsyn,dir) ;
-
-  double **Cstsyn = new double *[nbpop]() ;
-  for(int i=0;i<nbpop;i++) {
-    Cstsyn[i] = new double [nbpop]() ;    
-    for(int j=0;j<nbpop;j++)
-      Cstsyn[i][j] = exp(-dt/Tsyn[i][j]) ;
-  }
-
-  ///////////////////////////////////////////////////////////////////    
+  if(IF_RING)
+    getCrecCff(argv,nbpop,Crec,Cff) ;
 
   cout << "External Inputs : " ;
   for(int i=0;i<nbpop;i++) 
@@ -76,52 +35,68 @@ int main(int argc , char** argv) {
   }
 
   ///////////////////////////////////////////////////////////////////    
-  // Connectivity Matrix
+  // Time Csts
   ///////////////////////////////////////////////////////////////////    
- 
+  
+  double *Cst = new double [nbpop]() ;
+  for(int i=0;i<nbpop;i++) 
+    Cst[i] = exp(-dt/Tm[i]) ;
+   
+  Import_Synaptic_Parameters(nbpop,Tsyn,dir) ;
+
+  double **Cstsyn = new double *[nbpop]() ;
+  for(int i=0;i<nbpop;i++) {
+    Cstsyn[i] = new double [nbpop]() ;    
+    for(int j=0;j<nbpop;j++)
+      Cstsyn[i][j] = exp(-dt/Tsyn[i][j]) ;
+  }
+
+  ///////////////////////////////////////////////////////////////////    
+  // Connectivity Matrix
+  ///////////////////////////////////////////////////////////////////
+
   string Jpath = "../../" ;
   Create_Path(nbpop,Jpath,N,K) ;
+  if(IF_RING)
+    CreateDir_SpaceCrec(nbpop,Jpath,N,Crec) ;
+
   int *nbPost ;
   unsigned long  int *idxPost ;
   int *IdPost ;
-  Import_Connectivity_Matrix(nbpop,N,Jpath,nbPost,idxPost,IdPost,IF_Nk) ;
+  Import_Connectivity_Matrix(nbpop,N,Jpath,nbPost,idxPost,IdPost) ;
 
   ///////////////////////////////////////////////////////////////////    
   // Path
   ///////////////////////////////////////////////////////////////////    
 
   string path = "../" ;
-  CreateDir(dir, nbpop, N, K, g, path) ;
-  
-  if(IF_Iext)
-    CreateDir_Iext(1,ndI,Iext[ndI],path) ;
+  CreateDir(dir, nbpop, N, K, g, path) ; 
+
+  if(IF_RING) {
+    CreateDir_SpaceCrec(nbpop,path,N,Crec) ;
+    CreateDir_SpaceCff(nbpop,path,N,Cff) ;
+  }
+
+  if(IF_Iext) {
+    ndI = min(nbpop-1,PrtrPop) ;
+    cout <<"Perturbed Pop " << ndI << " | Input "<< Iext[ndI]-IextBL[ndI] << endl ;
+    CreateDir_Iext(nbpop,ndI,Iext[ndI],path) ;
+  }
 
   ///////////////////////////////////////////////////////////////////    
   // number of neurons
   ///////////////////////////////////////////////////////////////////    
 
-  int* Nk ;
-  nbNeurons(nbpop,N,Nk,IF_Nk) ;
-    
+  int* nbN ;
+  nbNeurons(nbpop,N,nbN) ;
   int* Cpt ; // compteur Cpt0 = Ne, cpt1 = Ne+Ni ...
-  Cpt = new int [nbpop+1]() ;
-  
-  for(int i=0;i<nbpop+1;i++) { 
-    for(int j=0;j<i;j++) 
-      Cpt[i] += Nk[j] ; 
-    cout <<"Cpt="<< Cpt[i] << " ";
-  }
-  cout << endl ;
+  cptNeurons(nbpop,nbN,Cpt) ;
 
   ///////////////////////////////////////////////////////////////////     
   // Scaling
-  ///////////////////////////////////////////////////////////////////     
+  //////////////////////////////////////////////////////////////////
 
-  duration = duration*1000. ;
-  Tst = Tst*1000. ;
-  Tw = Tw*1000. ;
-
-  Save_Parameters(dir, nbpop, N, Nk, K, J, duration, dt, Tst, Tw, Iext, Tm, Tsyn, path) ;
+  Save_Parameters(dir, nbpop, N, nbN, K, J, Iext, Tm, Tsyn, path) ;
 
   for(int i=0;i<nbpop;i++) {
     Iext[i] = sqrt(K)*Iext[i]*m0 ;
@@ -135,7 +110,6 @@ int main(int argc , char** argv) {
   // Dynamics of the network : I&F
   ///////////////////////////////////////////////////////////////////    
   
-
   vector<double> Mean_Activity(nbpop) ;
   vector<vector<double> > Idv_Inputs(nbpop,vector<double>(N)) ;
   vector<vector<double> > Idv_Activity(nbpop,vector<double>(N)) ;
@@ -144,21 +118,23 @@ int main(int argc , char** argv) {
 
   vector<vector<vector<double> > >Isyn(nbpop,vector<vector<double> >(nbpop)) ; 
 
-  vector<vector<double> > Isyntot(nbpop,vector<double>(N)) ;
-  vector<vector<double> > Volt(nbpop,vector<double>(N)) ;
+  vector<vector<double> > Isyntot(nbpop,vector<double>(N)) ; 
+  vector<vector<double> > Volt(nbpop,vector<double>(N)) ; 
 
   for (int i=0;i<nbpop;i++) {
-    Idv_Activity[i].resize(Nk[i]) ;
-    Volt[i].resize(Nk[i]) ;
-    Isyntot[i].resize(Nk[i]) ;
-    Jext[i].resize(Nk[i]) ;
+    Idv_Activity[i].resize(nbN[i]) ;
+    Volt[i].resize(nbN[i]) ;
+    Isyntot[i].resize(nbN[i]) ;
+    Jext[i].resize(nbN[i]) ;
     for (int j=0;j<nbpop;j++) 
-      Isyn[i][j].resize(Nk[i]) ;
+      Isyn[i][j].resize(nbN[i]) ;    
   }
-
-  if(IF_OPSIN)
-    External_Input(nbpop,N,Nk,K,2.0*M_PI,Iext,IextBL,ndI,Jext,2.0*M_PI,path) ;
   
+  if(IF_Iext & !IF_RING)
+    External_Input(nbpop,N,nbN,K,100,Iext,IextBL,ndI,Jext,path) ;
+  if(IF_Iext & IF_RING)
+    External_Input(nbpop,N,nbN,K,Cff,Iext,IextBL,ndI,Jext,path) ;
+
   ///////////////////////////////////////////////////////////////////    
 
   string strMean = path + "/Mean.txt" ;
@@ -192,25 +168,17 @@ int main(int argc , char** argv) {
   random_device rd ;
   default_random_engine gen( rd() ) ;
   uniform_real_distribution<double> unif(0,1) ;
+  normal_distribution<double> gaussian(1.,.25);
 
-  // uniform_real_distribution<double> unif(Vr, 0.9) ;  
-  normal_distribution<double> gaussian(0,.5);
-  
   cout << "Check random seed " ;
   for(int i=0;i<10;i++)
     cout << unif(gen) << " " ;
   cout << endl ;
 
-  for(i=0;i<nbpop;i++)   
-    for(k=0;k<Nk[i];k++) {
-      Volt[i][k] = gaussian(gen) ;
-      Isyntot[i][k] = gaussian(gen) ;
-    }
-  
-  // for(i=0;i<nbpop;i++)
-  //   for(k=0;k<Nk[i];k++) {
-  //     Volt[i][k] = 0 ;
-  //     Isyntot[i][k] = 0 ;
+  // for(i=0;i<nbpop;i++) 
+  //   for(k=0;k<nbN[i];k++) {
+  //     Volt[i][k] = gaussian(gen) ;
+  //     Isyntot[i][k] = gaussian(gen) ;
   //   }
   
   ///////////////////////////////////////////////////////////////////    
@@ -219,20 +187,19 @@ int main(int argc , char** argv) {
 
   double RK1=0,RK2=0,RK3=0,RK4=0 ;
   double Vold=0, percentage=0 ;
-  double Tl = 2000. ;
 
   cout << "Main loop :" ;
   cout << " duration " << duration << " | dt " << dt ;
   cout << " | Tst " << Tst << " | Tw " << Tw << " | Tl " << Tl << endl ;
 
-  for (double t=0.; t<duration+Tw; t+=dt) {
+  for (double t=0.; t<=duration; t+=dt) {  
 
     percentage = t/duration ;
-
-    if(t>=Tst) fVoltage << t-Tst ; // Adding Spikes by hand 
-
+    
+    if(t>=Tst && t<=Tst+Tl ) fVoltage << t-Tst ; // Adding Spikes by hand 
+    
     for(i=0;i<nbpop;i++) {    
-      for (k=0; k<Nk[i]; k++) {
+      for (k=0; k<nbN[i]; k++) {
 	
 	// if(t>=Tst && k<10) Cvl_Idv_Activity[i][k] = Cvl_Idv_Activity[i][k]*expalpha ;
 
@@ -265,8 +232,12 @@ int main(int argc , char** argv) {
 	RK4 = -(Volt[i][k]-Vr+dt*RK3)/Tm[i] + Isyntot[i][k] ;
 	Volt[i][k] = Volt[i][k] + dt/6.*(RK1 + 2.*RK2 + 2.*RK3 + RK4) ;
 		
+	///////////////////////////////////////////////////////////////////    
+	// IF Spike
+	///////////////////////////////////////////////////////////////////    
+
 	//if Spike reset V and update postsynaptic currents
-	if (Volt[i][k]>=Vth[i]) {
+	if (Volt[i][k]>=Vth) {
 	  Volt[i][k] = Vr ;
 	  
 	  // Improved accuracy
@@ -279,17 +250,17 @@ int main(int argc , char** argv) {
 	    if(k<10 && t<=Tst+Tl) fVoltage << " " << Vpeak ;
 	  }
 
-	  //Updating Postsynaptics inputs 
-	  for(j=0;j<nbpop;j++)
+	  // Updating Postsynaptics inputs 
+	  for(j=0;j<nbpop;j++) // i Pres to j Post => Jji 
 	    if(J[j][i]!=0)
-	      for (l=idxPost[k+Cpt[i]]; l<idxPost[k+Cpt[i]]+nbPost[k+Cpt[i]]; l++)
-		if(IdPost[l]>=Cpt[j] && IdPost[l]<Cpt[j+1])
-		  Isyn[j][i][IdPost[l]-Cpt[j]] += J[j][i] ;
+	      for (l=idxPost[k+Cpt[i]]; l<idxPost[k+Cpt[i]]+nbPost[k+Cpt[i]]; l++) 
+		if(IdPost[l]>=Cpt[j] && IdPost[l]<Cpt[j+1]) 
+		  Isyn[j][i][IdPost[l]-Cpt[j]] += J[j][i] ; 
 	  
 	  //Updating ISI  
-	  if(t>=Tst && t<=Tst+Tl) 
+	  if(t>=Tst && t<=Tst+Tl)
 	    fRaster << k+Cpt[i] << " " << t-Tst << endl ;
-	  	  
+	  
 	} // endif spike 
 	else
 	  if(t>=Tst and k<10 && t<=Tst+Tl) fVoltage << " " << Volt[i][k] ;
@@ -300,14 +271,13 @@ int main(int argc , char** argv) {
     
     // Updating Total Synaptic Input to each neurons in each population 
     for(i=0;i<nbpop;i++) 
-      for (k=0;k<Nk[i];k++) 
-	// Isyntot[i][k] = IextBL[i] + Jext[i][k] ;
-	Isyntot[i][k] = Iext[i] ;
+      for (k=0;k<nbN[i];k++) 
+	Isyntot[i][k] = IextBL[i] + Jext[i][k] ;
 
     for(i=0;i<nbpop;i++) 
-      for(j=0;j<nbpop;j++)
+      for(j=0;j<nbpop;j++) 
 	if(J[i][j]!=0) 
-	  for (k=0;k<Nk[i];k++) {
+	  for (k=0;k<nbN[i];k++) {
 	    Isyn[i][j][k] = Cstsyn[i][j]*Isyn[i][j][k] ; // same as suming over f(t-tspike) see Brette 2006
 	    Isyntot[i][k] += Isyn[i][j][k] ;
 	    // Isyn[i][j][k] = 0 ; // instantaneous synapse 
@@ -321,47 +291,51 @@ int main(int argc , char** argv) {
       	fInput << " " << (Iext[i]+Isyn[i][0][0])*Tm[i] ;
       	for(int j=1;j<nbpop;j++) 
       	  fInput << " " << Isyn[i][j][0]*Tm[i] ;
-      }    
+      }
       fInput << endl;  
-
+      
     } //endif 
     
     if(tw>=Tw) {
 
       cout << " t " << t-Tst << " Rates " ;
       for(i=0;i<nbpop;i++) {
-    	cout << " " << Mean_Activity[i]/tw/(double)Nk[i]*1000. ;
+    	cout << " " << Mean_Activity[i]/tw/(double)nbN[i]*1000. ;
 	Mean_Activity[i] = 0 ;
       }
       // cout << endl ;
 
       cout.flush();
-
+      
       if(t<=Tst+Tl) {
+
 	fMean << t-Tst ;
 	for(i=0;i<nbpop;i++) {
-	  fMean << " " << Mean_Activity[i]/tw/(double)Nk[i]*1000. ;
+	  fMean << " " << Mean_Activity[i]/tw/(double)nbN[i]*1000. ;
 	  Mean_Activity[i] = 0 ;
 	}
 	fMean << endl ;
-      
+	
 	fIdvInputs << t-Tst ;
 	for (int i=0 ;i<nbpop;i++) 
-	  for (int k=0 ;k<Nk[i];k++) {
+	  for (int k=0 ;k<nbN[i];k++) {
 	    fIdvInputs <<" "<< Idv_Inputs[i][k]/tw*1000. ;
 	    Idv_Inputs[i][k] = 0 ;
 	  }
 	fIdvInputs << endl ;
       }
-      
+
       fIdvRates << t-Tst ;
       for (int i=0 ;i<nbpop;i++) 
-	for (int k=0 ;k<Nk[i];k++) {
+	for (int k=0 ;k<nbN[i];k++) {
 	  fIdvRates <<" "<< Idv_Activity[i][k]/tw*1000. ;
 	  Idv_Activity[i][k] = 0 ;
 	}
       fIdvRates << endl ;
-      
+
+      // if(IF_OPSIN)
+      // 	External_Input(nbpop,N,nbN,K,Cff,Iext,IextBL,ndI,Jext,L,path) ;
+
       tw=0;
       
     }//ENDIF
@@ -382,13 +356,15 @@ int main(int argc , char** argv) {
   delete[] IdPost ;
   delete[] idxPost ;
 
-  delete [] Nk ;
+  delete [] nbN ;
   delete [] Cpt ;
 
   delete [] Iext ;
+  delete [] IextBL ;
   delete [] J ;
+ 
+  delete [] Crec ;
 
-  delete [] Tm ;
   delete [] Tsyn ;
 
   Isyn.clear() ;
@@ -396,7 +372,6 @@ int main(int argc , char** argv) {
   Volt.clear() ;
 
   Jext.clear() ;
-
   Mean_Activity.clear() ;
   Idv_Inputs.clear() ;
   Idv_Activity.clear() ;
