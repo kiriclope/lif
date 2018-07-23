@@ -77,7 +77,7 @@ int main(int argc , char** argv) {
     CreateDir_SpaceCff(nbpop,path,N,Cff) ;
   }
 
-  if(IF_Iext) {
+  if(IF_Prtr) {
     ndI = min(nbpop-1,PrtrPop) ;
     cout <<"Perturbed Pop " << ndI << " | Input "<< Iext[ndI]-IextBL[ndI] << endl ;
     CreateDir_Iext(nbpop,ndI,Iext[ndI],path) ;
@@ -130,9 +130,9 @@ int main(int argc , char** argv) {
       Isyn[i][j].resize(nbN[i]) ;    
   }
   
-  if(IF_Iext & !IF_RING)
+  if(IF_Prtr & !IF_RING)
     External_Input(nbpop,N,nbN,K,100,Iext,IextBL,ndI,Jext,path) ;
-  if(IF_Iext & IF_RING)
+  if(IF_Prtr & IF_RING)
     External_Input(nbpop,N,nbN,K,Cff,Iext,IextBL,ndI,Jext,path) ;
 
   ///////////////////////////////////////////////////////////////////    
