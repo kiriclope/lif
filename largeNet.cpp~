@@ -13,8 +13,9 @@ int main(int argc , char** argv) {
   ///////////////////////////////////////////////////////////////////    
   
   string dir ;
-  int nbpop, N, ndI;
-  double K, **J, **Tsyn, g, *Iext, *IextBL, *Crec, Cff ;
+  int nbpop, ndI;
+  unsigned long N ;
+  double K, **J, **Tsyn, g, *Iext, *IextBL, *Crec, Cff = L ;
   
   Set_Parameters(argc,argv,dir,nbpop,N,K,g,Iext,IextBL) ; 
 
@@ -38,6 +39,7 @@ int main(int argc , char** argv) {
   // Time Csts
   ///////////////////////////////////////////////////////////////////    
 
+  cout << "Membrane time constants : " ;
   for(int i=0;i<nbpop;i++) 
     cout << Tm[i] << " " ;  
   cout << endl ;    
@@ -45,7 +47,7 @@ int main(int argc , char** argv) {
   double *Cst = new double [nbpop]() ;
   for(int i=0;i<nbpop;i++) 
     Cst[i] = exp(-dt/Tm[i]) ;
-   
+  
   Import_Synaptic_Parameters(nbpop,Tsyn,dir) ;
 
   double **Cstsyn = new double *[nbpop]() ;
@@ -55,21 +57,7 @@ int main(int argc , char** argv) {
       Cstsyn[i][j] = exp(-dt/Tsyn[i][j]) ;
   }
 
-  ///////////////////////////////////////////////////////////////////    
-  // Connectivity Matrix
   ///////////////////////////////////////////////////////////////////
-
-  string Jpath = "../../" ;
-  Create_Path(nbpop,Jpath,N,K) ;
-  if(IF_RING)
-    CreateDir_SpaceCrec(nbpop,Jpath,N,Crec) ;
-
-  int *nbPost ;
-  unsigned long  int *idxPost ;
-  int *IdPost ;
-  Import_Connectivity_Matrix(nbpop,N,Jpath,nbPost,idxPost,IdPost) ;
-
-  ///////////////////////////////////////////////////////////////////    
   // Path
   ///////////////////////////////////////////////////////////////////    
 
@@ -91,14 +79,81 @@ int main(int argc , char** argv) {
   }
 
   ///////////////////////////////////////////////////////////////////    
-  // number of neurons
-  ///////////////////////////////////////////////////////////////////    
+  // Connectivity Matrix
+  ///////////////////////////////////////////////////////////////////
 
-  int* nbN ;
+  unsigned long *nbN ;
   nbNeurons(nbpop,N,nbN) ;
-  int* Cpt ; // compteur Cpt0 = Ne, cpt1 = Ne+Ni ...
+  unsigned long *Cpt ; // compteur Cpt0 = Ne, cpt1 = Ne+Ni ...
   cptNeurons(nbpop,nbN,Cpt) ;
 
+  string JpathEE = "../../" ;
+  string JpathEI = "../../" ;
+  string JpathIE = "../../" ;
+  string JpathII = "../../" ;
+
+  string JpathES = "../../" ;
+  string JpathIS = "../../" ;
+  string JpathSE = "../../" ;
+  string JpathSI = "../../" ;
+
+  string JpathSV = "../../" ;
+  string JpathVE = "../../" ;
+  string JpathVI = "../../" ;
+  string JpathVS = "../../" ;
+
+  if(nbpop>=2) {
+    Create_Path_Large(JpathEE,nbN[0],K) ;
+    Create_Path_Large(JpathEI,nbN[1],K) ;
+    Create_Path_Large(JpathIE,nbN[0],K) ;
+    Create_Path_Large(JpathII,nbN[1],K) ;
+  }
+  if(nbpop>=3) {
+    Create_Path_Large(JpathES,nbN[0],K) ;
+    Create_Path_Large(JpathIS,nbN[1],K) ;
+    Create_Path_Large(JpathSE,nbN[0],K) ;
+    Create_Path_Large(JpathSI,nbN[1],K) ;
+  }
+  if(nbpop>=4) {
+    Create_Path_Large(JpathSV,nbN[0],K) ;
+    Create_Path_Large(JpathVE,nbN[1],K) ;
+    Create_Path_Large(JpathVI,nbN[0],K) ;
+    Create_Path_Large(JpathVS,nbN[1],K) ;
+  }
+  // if(IF_RING)
+  //   CreateDir_SpaceCrec(nbpop,Jpath,N,Crec) ;
+
+  int *nbPost_EE, *nbPost_EI , *nbPost_IE, *nbPost_II ;
+  unsigned long *idxPost_EE, *idxPost_EI, *idxPost_IE, *idxPost_II ;
+  unsigned long *IdPost_EE, *IdPost_EI, *IdPost_IE, *IdPost_II ; 
+
+  int *nbPost_ES, *nbPost_IS , *nbPost_SE, *nbPost_SI ;
+  unsigned long *idxPost_ES, *idxPost_IS, *idxPost_SE, *idxPost_SI ;
+  unsigned long *IdPost_ES, *IdPost_IS, *IdPost_SE, *IdPost_SI ; 
+ 
+  int *nbPost_SV, *nbPost_VE , *nbPost_VI, *nbPost_VS ;
+  unsigned long *idxPost_SV, *idxPost_VE, *idxPost_VI, *idxPost_VS ;
+  unsigned long *IdPost_SV, *IdPost_VE, *IdPost_VI, *IdPost_VS ; 
+
+  if(nbpop>=2) {
+    Import_Connectivity_Matrix_Large(nbpop,"EE",nbN[0],JpathEE,nbPost_EE,idxPost_EE,IdPost_EE) ;
+    Import_Connectivity_Matrix_Large(nbpop,"EI",nbN[1],JpathEI,nbPost_EI,idxPost_EI,IdPost_EI) ;
+    Import_Connectivity_Matrix_Large(nbpop,"IE",nbN[0],JpathIE,nbPost_IE,idxPost_IE,IdPost_IE) ;
+    Import_Connectivity_Matrix_Large(nbpop,"II",nbN[1],JpathII,nbPost_II,idxPost_II,IdPost_II) ;
+  }
+  if(nbpop>=3) {
+    Import_Connectivity_Matrix_Large(nbpop,"ES",nbN[2],JpathES,nbPost_ES,idxPost_ES,IdPost_ES) ;
+    Import_Connectivity_Matrix_Large(nbpop,"IS",nbN[2],JpathIS,nbPost_IS,idxPost_IS,IdPost_IS) ;
+    Import_Connectivity_Matrix_Large(nbpop,"SE",nbN[0],JpathSE,nbPost_SE,idxPost_SE,IdPost_SE) ;
+    // Import_Connectivity_Matrix_Large(nbpop,"SI",nbN[1],JpathSI,nbPost_SI,idxPost_SI,IdPost_SI) ;
+  }
+  if(nbpop>=4) {
+    Import_Connectivity_Matrix_Large(nbpop,"SV",nbN[0],JpathSV,nbPost_SV,idxPost_SV,IdPost_SV) ;
+    Import_Connectivity_Matrix_Large(nbpop,"VE",nbN[1],JpathVE,nbPost_VE,idxPost_VE,IdPost_VE) ;
+    Import_Connectivity_Matrix_Large(nbpop,"VI",nbN[0],JpathVI,nbPost_VI,idxPost_VI,IdPost_VI) ;
+    Import_Connectivity_Matrix_Large(nbpop,"VS",nbN[1],JpathVS,nbPost_VS,idxPost_VS,IdPost_VS) ;
+  }
+  
   ///////////////////////////////////////////////////////////////////     
   // Scaling
   //////////////////////////////////////////////////////////////////
@@ -108,9 +163,9 @@ int main(int argc , char** argv) {
   for(int i=0;i<nbpop;i++) {
     Iext[i] = sqrt(K)*Iext[i]*m0 ;
     IextBL[i] = sqrt(K)*IextBL[i]*m0 ;
-    for(int j=0;j<nbpop;j++) {
+    for(int j=0;j<nbpop;j++) 
       J[i][j] = g*J[i][j]/sqrt(K)/Tsyn[i][j] ;
-    }
+    
   }
 
   ///////////////////////////////////////////////////////////////////    
@@ -139,7 +194,7 @@ int main(int argc , char** argv) {
   
   // if(IF_Prtr & !IF_RING)
   //   External_Input(nbpop,N,nbN,K,100,Iext,IextBL,ndI,Jext,path) ;
-  if(IF_Prtr & IF_RING)
+  if(IF_Prtr)
     External_Input(nbpop,N,nbN,K,Cff,Iext,IextBL,ndI,Jext,path) ;
 
   ///////////////////////////////////////////////////////////////////    
@@ -165,8 +220,8 @@ int main(int argc , char** argv) {
   ///////////////////////////////////////////////////////////////////    
 
   double tw = 0. ; //Time window
-  int i=0,j=0,k=0,m=0;
-  unsigned long int l=0;
+  int i=0,j=0 ;
+  unsigned long k=0, l=0 ;
   
   ///////////////////////////////////////////////////////////////////    
 
@@ -175,17 +230,19 @@ int main(int argc , char** argv) {
   random_device rd ;
   default_random_engine gen( rd() ) ;
   uniform_real_distribution<double> unif(0,1) ;
-  normal_distribution<double> gaussian(1.,.25);
+
+  normal_distribution<double> gaussianV(1,.25);
+  normal_distribution<double> gaussianI(0,10.);
 
   cout << "Check random seed " ;
-  for(int i=0;i<10;i++)
+  for(i=0;i<10;i++)
     cout << unif(gen) << " " ;
   cout << endl ;
 
   for(i=0;i<nbpop;i++) 
     for(k=0;k<nbN[i];k++) {
-      Volt[i][k] = gaussian(gen) ;
-      Isyntot[i][k] = gaussian(gen) ;
+      Volt[i][k] = gaussianV(gen) ;
+      Isyntot[i][k] = gaussianI(gen) ;
     }
   
   ///////////////////////////////////////////////////////////////////    
@@ -216,7 +273,7 @@ int main(int argc , char** argv) {
 	// Standard Euler Algorithm
 	///////////////////////////////////////////////////////////////////    
 	
-	// Volt[i][k] = Cst[i]*(Volt[i][k]-Vr)+dt*Isyntot[i][k] ;
+	// Volt[i][k] = Cst[i] * ( Volt[i][k]-Vr ) + dt * IextBL[i] + Isyntot[i][k] ;
 	// Volt[i][k]=(1.-dt/Tm[i])*Volt[i][k]+dt*(Isyntot[i][k]+Vr/Tm[i]);
 	
 	///////////////////////////////////////////////////////////////////    
@@ -230,8 +287,6 @@ int main(int argc , char** argv) {
 	///////////////////////////////////////////////////////////////////    
 	// RK4
 	///////////////////////////////////////////////////////////////////    
-
-	// Vold = Volt[i][k] ;
 
 	RK1 = -(Volt[i][k]-Vr)/Tm[i] + Isyntot[i][k] ;
 	RK2 = -(Volt[i][k]-Vr+dt/2.*RK1)/Tm[i] + Isyntot[i][k] ;
@@ -258,12 +313,48 @@ int main(int argc , char** argv) {
 	  }
 
 	  // Updating Postsynaptics inputs 
-	  for(j=0;j<nbpop;j++) // i Pres to j Post => Jji 
-	    if(J[j][i]!=0)
-	      for (l=idxPost[k+Cpt[i]]; l<idxPost[k+Cpt[i]]+nbPost[k+Cpt[i]]; l++) 
-		if(IdPost[l]>=Cpt[j] && IdPost[l]<Cpt[j+1]) 
-		  Isyn[j][i][IdPost[l]-Cpt[j]] += J[j][i] ; 
-	  
+	  if(i==0) {
+	    for ( l = idxPost_EE[k] ; l < (unsigned long) idxPost_EE[k] + nbPost_EE[k] ; l++) 
+	      Isyn[0][i][IdPost_EE[l]] += J[0][i] ; 
+	    for ( l = idxPost_IE[k] ; l < (unsigned long) idxPost_IE[k] + nbPost_IE[k] ; l++) 
+	      Isyn[1][i][IdPost_IE[l]] += J[1][i] ; 
+	    if(nbpop>=3)
+	      for ( l = idxPost_SE[k] ; l < (unsigned long) idxPost_SE[k] + nbPost_SE[k] ; l++) 
+		Isyn[2][i][IdPost_SE[l]] += J[2][i] ; 
+	    if(nbpop>=4)
+	      for ( l = idxPost_VE[k] ; l < (unsigned long) idxPost_VE[k] + nbPost_VE[k] ; l++) 
+		Isyn[3][i][IdPost_VE[l]] += J[3][i] ; 
+	  }
+
+	  if(i==1) {
+	    for ( l = idxPost_EI[k] ; l < (unsigned long) idxPost_EI[k] + nbPost_EI[k] ; l++) 
+	      Isyn[0][i][IdPost_EI[l]] += J[0][i] ; 
+	    for ( l = idxPost_II[k] ; l < (unsigned long) idxPost_II[k] + nbPost_II[k] ; l++) 
+	      Isyn[1][i][IdPost_II[l]] += J[1][i] ; 
+	    if(nbpop==3)
+	      for ( l = idxPost_SI[k] ; l < (unsigned long) idxPost_SI[k] + nbPost_SI[k] ; l++) 
+		Isyn[2][i][IdPost_SI[l]] += J[2][i] ; 
+	    if(nbpop>=4)
+	      for ( l = idxPost_VI[k] ; l < (unsigned long) idxPost_VI[k] + nbPost_VI[k] ; l++) 
+		Isyn[3][i][IdPost_VI[l]] += J[3][i] ; 
+	  }
+
+	  if(i==2) {
+	    for ( l = idxPost_ES[k] ; l < (unsigned long) idxPost_ES[k] + nbPost_ES[k] ; l++) 
+	      Isyn[0][i][IdPost_ES[l]] += J[0][i] ; 
+	    for ( l = idxPost_IS[k] ; l < (unsigned long) idxPost_IS[k] + nbPost_IS[k] ; l++) 
+	      Isyn[1][i][IdPost_IS[l]] += J[1][i] ; 
+	    if(nbpop>=4)
+	      for ( l = idxPost_VS[k] ; l < (unsigned long) idxPost_VS[k] + nbPost_VS[k] ; l++) 
+		Isyn[3][i][IdPost_VS[l]] += J[3][i] ; 
+	  }
+
+	  if(i==3) {
+	    if(nbpop>=3)
+	      for ( l = idxPost_SV[k] ; l < (unsigned long) idxPost_SV[k] + nbPost_SV[k] ; l++) 
+		Isyn[2][i][IdPost_SV[l]] += J[2][i] ; 
+	  }
+
 	  //Updating ISI  
 	  if(t>=Tst && t<=Tst+Tl)
 	    fRaster << k+Cpt[i] << " " << t-Tst << endl ;
@@ -279,14 +370,15 @@ int main(int argc , char** argv) {
     // Updating Total Synaptic Input to each neurons in each population 
     for(i=0;i<nbpop;i++) 
       for (k=0;k<nbN[i];k++) 
-	Isyntot[i][k] = IextBL[i] + Jext[i][k] ;
+    	Isyntot[i][k] = IextBL[i] + Jext[i][k] ;
 
     for(i=0;i<nbpop;i++) 
       for(j=0;j<nbpop;j++) 
 	if(J[i][j]!=0) 
 	  for (k=0;k<nbN[i];k++) {
-	    Isyn[i][j][k] = Cstsyn[i][j]*Isyn[i][j][k] ; // same as suming over f(t-tspike) see Brette 2006
-	    Isyntot[i][k] += Isyn[i][j][k] ;
+	    Isyntot[i][k] += Isyn[i][j][k] ; // same as suming over f(t-tspike) see Brette 2006
+	    Isyn[i][j][k] = Cstsyn[i][j]*Isyn[i][j][k] ;
+	    // Isyntot[i][k] += Isyn[i][j][k] * ( Cst[i] -Cstsyn[i][j] ) * Tsyn[i][j] / (Tm[i] - Tsyn[i][j] ) ;
 	    // Isyn[i][j][k] = 0 ; // instantaneous synapse 
 	  }
     
@@ -359,9 +451,21 @@ int main(int argc , char** argv) {
 
   ///////////////////////////////////////////////////////////////////    
 
-  delete[] nbPost ;
-  delete[] IdPost ;
-  delete[] idxPost ;
+  delete [] nbPost_EE ;
+  delete [] IdPost_EE ;
+  delete [] idxPost_EE ;
+
+  delete [] nbPost_EI ;
+  delete [] IdPost_EI ;
+  delete [] idxPost_EI ;
+
+  delete [] nbPost_IE ;
+  delete [] IdPost_IE ;
+  delete [] idxPost_IE ;
+
+  delete [] nbPost_II ;
+  delete [] IdPost_II ;
+  delete [] idxPost_II ;
 
   delete [] nbN ;
   delete [] Cpt ;

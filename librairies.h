@@ -9,4 +9,5 @@
 #include <cstring>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <functional>   // std::plus
 #include <algorithm> 

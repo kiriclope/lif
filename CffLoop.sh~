@@ -12,7 +12,7 @@ else
     read dir nbpop N k dt duration Tst Tw g <<<  "$1 $2 $3 $4 $5 $6 $7 $8 $9"
 
     if [ "$nbpop" = 4 ]; then 
-	read E I S V Tme Tmi Tms Tmv CrecE CrecI CrecS CrecV Cff dI Imax <<< "${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24}"
+	read E I S V Tme Tmi Tms Tmv CrecE CrecI CrecS CrecV Cff dCff Cffmax <<< "${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24}"
     fi
 
     if [ "$nbpop" = 3 ]; then 
@@ -33,7 +33,7 @@ export $LANG=en_US
 
 Cffmin=$Cff
 
-echo Cffmin$Cffmin dCff$dCff Imax$Cffmax
+echo Cffmin$Cffmin dCff$dCff Cffmax$Cffmax
 for Cff in $(seq $Cffmin $dCff $Cffmax); do
     
     DIRECTORY=$(printf "../%dpop/Network/%s/N%d/K%d/g%.2f/Prtr_I/Iext_I%.4f/Space/CrecE%.2fCrecI%.2fCff%.2f" "$nbpop" "$dir" "$N" "$k" "$g" "$I" "$CrecE" "$CrecI" "$Cff")

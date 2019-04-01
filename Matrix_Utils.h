@@ -28,6 +28,31 @@ void Create_Path(int nbpop,string &path,int N,double K) {
 
 ///////////////////////////////////////////////////////////////////    
 
+void Create_Path_Large(string &path, unsigned long nbN , double K) {
+  
+  string mkdirp = "mkdir -p " ;
+  path += "Connectivity/1pop/Large/N" + to_string(nbN/nbPref) ;
+  
+  char cK[10] ;
+  sprintf(cK,"%0.0f",K) ;
+  string sK = string(cK) ;
+  
+  path += "/K"+sK; 
+  mkdirp += path ; 
+
+  const char * cmd = mkdirp.c_str();
+  const int dir_err = system(cmd);
+
+  if(-1 == dir_err) {
+    cout << "error creating directories" << endl ;
+  }
+  
+  cout << "Created directory : " ;
+  cout << path << endl ;
+}
+
+///////////////////////////////////////////////////////////////////    
+
 void Create_Path_Ka(int nbpop,string &path,int N,double *K) {
   
   string mkdirp = "mkdir -p " ;

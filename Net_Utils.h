@@ -91,30 +91,30 @@ void getIextBL(int nbpop, string dir, double* &IextBL) {
 
 ///////////////////////////////////////////////////////////////////////
 
-void Set_Parameters(int argc , char** argv, string &dir, int &nbpop, int &N, double &K, double &g, double* &Iext, double* &IextBL) {
+void Set_Parameters(int argc , char** argv, string &dir, int &nbpop, unsigned long &N, double &K, double &g, double* &Iext, double* &IextBL) {
 
   if(argv[1] != NULL) {
     
     dir = argv[1] ;
     nbpop = (int) atoi(argv[2]) ;
-    N = (int) atoi(argv[3]) ;
+    N = (unsigned long) atoi(argv[3]) ;
     K = (double) atof(argv[4]) ;
     g = (double) atof(argv[5]) ;
 
-    getIextBL(nbpop,dir,IextBL) ;
+    getIextBL(nbpop,dir,IextBL) ; 
     Iext = new double [nbpop] ;      
  
     cout << "Iext : " ;
     if(!argIext) {
       for(int i=0;i<nbpop;i++) {
-	Iext[i] = IextBL[i] ;
+	Iext[i] = IextBL[i] ; 
 	cout << Iext[i] << " " ;
       }
       cout << endl ;
     }
     else {
-      for(int i=0;i<nbpop;i++) {
-	Iext[i] = (double) atof(argv[i+6]) ;
+      for(int i=0;i<nbpop;i++) { 
+	Iext[i] = (double) atof(argv[i+6]) ; 
 	cout << Iext[i] << " " ;
       }
       cout << endl ;    
@@ -136,32 +136,9 @@ void Set_Parameters(int argc , char** argv, string &dir, int &nbpop, int &N, dou
     cout << "External Inputs ? " ;
     Iext = new double [nbpop] ;      
     for(int i=0;i<nbpop;i++) 
-      cin >> Iext[i] ;
+      cin >> Iext[i] ; 
   }
 
-}
-
-///////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////
-
-void Set_Parameters_Ka(int argc , char** argv, string &dir, int &nbpop, int &N, double* &K, double &g, double* &Iext) {
-
-  if(argv[1] != NULL) {
-    dir = argv[1] ;
-    nbpop = (int) atoi(argv[2]) ; // total number of neurons prefactor
-    N = (int) atoi(argv[3]) ;
-
-    K = new double[nbpop] ;
-    for(int i=0;i<nbpop;i++)       
-      K[i] = (double) atof(argv[i+4]) ;
-
-    g = (double) atof(argv[5+nbpop]) ;
-    
-    Iext = new double [nbpop] ;      
-    for(int i=0;i<nbpop;i++) 
-      Iext[i] = (double) atof(argv[i+nbpop+6]) ;
-  }
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -224,11 +201,21 @@ void Import_Synaptic_Parameters(int nbpop,double** &Tsyn,string dir) {
     cout << "Tparam.txt not found" << endl ;
     for(int i=0;i<nbpop;i++) 
       for(int j=0;j<nbpop;j++) {
-	if(j==0)
-	  Tsyn[i][j] = 3. ;
-    	if(j!=0)
-	  Tsyn[i][j] = 2. ;    
+	if( j==0 & nbpop==2 )
+	  Tsyn[i][j] = 2. ;
+	else
+	  Tsyn[i][j] = 2. ; 
       }
+    if(nbpop==4) {
+      Tsyn[0][0] = 4 ;
+      Tsyn[3][0] = 4 ;
+      Tsyn[1][2] = 4 ;
+      Tsyn[3][2] = 4 ;
+      Tsyn[2][3] = 4 ;
+
+      Tsyn[0][3] = 4 ;
+      Tsyn[1][3] = 4 ;
+    }
   }
   
   for(int i=0;i<nbpop;i++) {
@@ -241,51 +228,7 @@ void Import_Synaptic_Parameters(int nbpop,double** &Tsyn,string dir) {
 
 ///////////////////////////////////////////////////////////////////////
 
-void Import_Inputs_number(int nbpop, double K, vector<vector<double> > &Kk, string dir) {
-      
-  cout << "Reading Inputs number from : " ;
-  string Kparam = "../Parameters/" + to_string(nbpop)+"pop/"+ dir +"/Kparam.txt" ;
-  cout << Kparam << endl;
-
-  struct stat buffer;   
-  if (stat (Kparam.c_str(), &buffer) == 0) {
-    FILE *Kfile ;
-    Kfile = fopen(Kparam.c_str(),"r");
-      
-    int dum = 0 ;
-    for(int i=0;i<nbpop;i++) 
-      for(int j=0;j<nbpop;j++) 
-	dum = fscanf(Kfile, "%lf", &Kk[i][j]) ; 
-    fclose(Kfile) ;
-    for(int i=0;i<nbpop;i++) 
-      for(int j=0;j<nbpop;j++)
-	Kk[i][j]=Kk[i][j]*K ;
-  }
-  else {
-    cout << "Kparam.txt not found" << endl ;
-    for(int i=0;i<nbpop;i++) {
-	if(nbpop==2) {
-	  Kk[i][0]= 70.*K/100. ;
-	  Kk[i][1]= 30.*K/100. ;
-	}
-	if(nbpop==3) {
-	  Kk[i][0]= 70.*K/100. ;
-	  Kk[i][1]= 20.*K/100. ;
-	  Kk[i][2]= 10.*K/100. ;
-	}
-	if(nbpop==4) {
-	  Kk[i][0]= 70.*K/100. ;
-	  Kk[i][1]= 15.*K/100. ;
-	  Kk[i][2]= 10.*K/100. ;
-	  Kk[i][3]= 5.*K/100. ;
-	}
-      }
-  }
-}
-
-///////////////////////////////////////////////////////////////////////
-
-void Import_Connectivity_Matrix(int nbpop,int N,string Jpath,int* &nbPost,unsigned long int* &idxPost,int* &IdPost) {
+void Import_Connectivity_Matrix(int nbpop, unsigned long N, string Jpath, int* &nbPost, unsigned long* &idxPost, unsigned long* &IdPost) {
   
   cout << "Importing Connectivity from : " << endl ;
  
@@ -312,28 +255,28 @@ void Import_Connectivity_Matrix(int nbpop,int N,string Jpath,int* &nbPost,unsign
 
   if (stat (Idpath.c_str(), &buffer) == 0 || stat (nbpath.c_str(), &buffer) == 0 || stat (idxpath.c_str(), &buffer) == 0) {
     
-    N=N*10000 ;
+    N = (unsigned long) N*nbPref ;
     
     nbPost = new int [N] ;
-    idxPost = new unsigned long int [N] ;
+    idxPost = new unsigned long [N] ;
 
     FILE *fnbPost, *fidxPost, *fIdPost ;
     
     int dum ;
 
     fnbPost = fopen(nbpath.c_str(), "rb") ;
-    dum = fread(&nbPost[0], sizeof nbPost[0], N , fnbPost);  
+    dum = fread(&nbPost[0], sizeof nbPost[0], N , fnbPost); 
     fclose(fnbPost);
 
-    fidxPost = fopen(idxpath.c_str(), "rb") ;
+    fidxPost = fopen(idxpath.c_str(), "rb") ; 
     dum = fread(&idxPost[0], sizeof idxPost[0], N , fidxPost);
     fclose(fidxPost);
     
-    unsigned long int nbposttot = 0 ;
-    for(int j=0 ; j<N; j++)
+    unsigned long nbposttot = 0 ;
+    for(unsigned long j=0 ; j<N; j++)
       nbposttot += nbPost[j] ;
 
-    IdPost = new int [nbposttot] ;
+    IdPost = new unsigned long [nbposttot] ;
     
     fIdPost = fopen(Idpath.c_str(), "rb");
     dum = fread(&IdPost[0], sizeof IdPost[0], nbposttot , fIdPost); 
@@ -343,12 +286,70 @@ void Import_Connectivity_Matrix(int nbpop,int N,string Jpath,int* &nbPost,unsign
     cout << "ERROR : nbPost.dat or idxPost.dat or IdPost.dat not found" << endl ;
     exit(-1) ;
   }
-
 }
 
 ///////////////////////////////////////////////////////////////////////
 
-void Check_Connectivity_Matrix(string Jpath,int nbpop, int N, double K) {
+void Import_Connectivity_Matrix_Large(int nbpop, string AtoB, unsigned long nbN, string Jpath, int* &nbPost_AB, unsigned long* &idxPost_AB, unsigned long* &IdPost_AB) {
+  
+  cout << "Importing Connectivity from : " << endl ;
+ 
+  string nbpath = Jpath ;
+  string idxpath = Jpath ;
+  string Idpath = Jpath ;
+  
+  if(IF_Nk) {
+    nbpath += "/nbPost_" + AtoB + "_Nk.dat" ;
+    idxpath += "/idxPost_" + AtoB + "_Nk.dat" ;
+    Idpath += "/IdPost_" + AtoB + "_Nk.dat" ; 
+  }
+  else {
+    nbpath += "/nbPost_" + AtoB + ".dat" ;
+    idxpath += "/idxPost_" + AtoB + ".dat" ;
+    Idpath += "/IdPost_" + AtoB + ".dat" ; 
+  }
+
+  cout << nbpath << endl ;
+  cout << idxpath << endl ;
+  cout << Idpath << endl ;
+
+  struct stat buffer;   
+
+  if (stat (Idpath.c_str(), &buffer) == 0 || stat (nbpath.c_str(), &buffer) == 0 || stat (idxpath.c_str(), &buffer) == 0) {
+    
+    nbPost_AB = new int [nbN] ;
+    idxPost_AB = new unsigned long [nbN] ;
+    
+    FILE *fnbPost, *fidxPost, *fIdPost ; 
+    int dum ;
+
+    fnbPost = fopen(nbpath.c_str(), "rb") ;
+    dum = fread(&nbPost_AB[0], sizeof nbPost_AB[0], nbN , fnbPost); 
+    fclose(fnbPost);
+
+    fidxPost = fopen(idxpath.c_str(), "rb") ; 
+    dum = fread(&idxPost_AB[0], sizeof idxPost_AB[0], nbN , fidxPost);
+    fclose(fidxPost);
+    
+    unsigned long nbposttot = 0 ;
+    for(unsigned long j=0 ; j<nbN; j++)
+      nbposttot += nbPost_AB[j] ;
+
+    IdPost_AB = new unsigned long [nbposttot] ;
+    
+    fIdPost = fopen(Idpath.c_str(), "rb");
+    dum = fread(&IdPost_AB[0], sizeof IdPost_AB[0], nbposttot , fIdPost); 
+    fclose(fIdPost);
+  }
+  else {
+    cout << "ERROR : nbPost_" << AtoB << ".dat" << " or idxPost_" << AtoB << ".dat" << " or IdPost_" << AtoB << ".dat" << " not found" << endl ;
+    exit(-1) ;
+  }
+}
+
+///////////////////////////////////////////////////////////////////////
+
+void Check_Connectivity_Matrix(string Jpath,int nbpop, unsigned long N, double K) {
 
   vector<string> List(4) ;
   List[0] = 'E' ;
@@ -390,7 +391,7 @@ void Check_Connectivity_Matrix(string Jpath,int nbpop, int N, double K) {
 
 ///////////////////////////////////////////////////////////////////////
 
-void Save_Parameters(string dir, int nbpop, int N, int *Nk, double K, double** J, double *Iext, const double *Tm, double **Tsyn, string path) {
+void Save_Parameters(string dir, int nbpop, unsigned long N, unsigned long *Nk, double K, double** J, double *Iext, const double *Tm, double **Tsyn, string path) {
 
   string fparam = path + "/Param.txt" ;
   ofstream param(fparam.c_str(), ios::out | ios::ate);
@@ -437,63 +438,7 @@ void Save_Parameters(string dir, int nbpop, int N, int *Nk, double K, double** J
 
 ///////////////////////////////////////////////////////////////////////
 
-void Save_Parameters_Ka(string dir, int nbpop, int N, int *Nk, double *K, double** J, double *Iext, const double *Tm, double **Tsyn, string path) {
-
-  string fparam = path + "/Param.txt" ;
-  ofstream param(fparam.c_str(), ios::out | ios::ate);
-
-  vector<char> List(4) ;
-  List[0] = 'E' ;
-  List[1] = 'I' ;
-  List[2] = 'S' ;
-  List[3] = 'V' ;
-
-  param << "Number of neurons " ;
-  param << N ;
-  for(int i=0;i<nbpop;i++)
-    param <<" "<< "N"<< List[i] <<"="<< Nk[i] ;
-  param << endl;
-
-  param << "Number of Inputs K " ;
-  for(int i=0;i<nbpop;i++)
-    param << "K" << List[i] << K[i] << " "; 
-  param << endl ;
-
-  param << "dt=" << dt << " "<< "duration=" << duration << " " ;
-  param << "Tst=" << Tst << " " << "Tw=" << Tw << endl ; 
-
-  param << "External Inputs" << endl ;
-  for(int i=0;i<nbpop;i++)
-    param << List[i]<<"="<< Iext[i] << " " ;
-  param << endl ;
- 
-  param << "Synaptic Strength" << endl ;
-  for(int i=0;i<nbpop;i++) {
-    param << "//" ;
-    for(int j=0;j<nbpop;j++) 
-      param << J[i][j] << " " ;
-    param << "//" << endl;
-  }  
-      
-  param << "Membrane Time Constantes" << endl ;
-  for(int i=0;i<nbpop;i++) 
-    param << Tm[i] << " " ;
-  param << endl ; 
-
-  param << "Synaptic Time Constantes" << endl ;
-  for(int i=0;i<nbpop;i++) {
-    param << "//" ;    
-    for(int j=0;j<nbpop;j++) 
-      param << Tsyn[i][j]  << " " ;
-    param << "//" << endl;
-  }  
-  
-  param.close();
-}
-
-///////////////////////////////////////////////////////////////////////
-
-void CreateDir(string dir, int nbpop, int N, double K, double g, string &path) {
+void CreateDir(string dir, int nbpop, unsigned long N, double K, double g, string &path) {
 
   string mkdirp = "mkdir -p " ;
   path += "Simulations/"+ to_string(nbpop)+"pop/" + dir + "/N" + to_string(N) ;
@@ -520,42 +465,9 @@ void CreateDir(string dir, int nbpop, int N, double K, double g, string &path) {
 
 }
 
-void CreateDir_Ka(string dir, int nbpop, int N, double *K, double g, string &path) {
+///////////////////////////////////////////////////////////////////////
 
-  string mkdirp = "mkdir -p " ;
-  path += "Simulations/"+to_string(nbpop)+"pop/"+ dir + "/N" + to_string(N) + "/" ;
-
-  string popList[4] = {"E","I","S","V"} ;  
-  if(nbpop==1) 
-    popList[0] = "I" ;
-
-  char cK[10] ;
-  string sK ;
-  for(int i=0;i<nbpop;i++) {
-    sprintf(cK,"%0.0f",K[i]) ;
-    sK = string(cK) ;
-    path += "K"+ popList[i] + sK ;
-  }
-
-  char cg[10] ;
-  sprintf(cg,"%0.2f",g) ;
-  string sg = string(cg) ;
-
-  path += "/g" + sg ;  
-  mkdirp += path ;
-
-  const char * cmd = mkdirp.c_str();
-  const int dir_err = system(cmd);
-
-  if(-1 == dir_err) 
-    cout << "error creating directories" << endl ;
-
-  cout << "Created directory : " ;
-  cout << path << endl ;
-
-}
-
-void CreateDir_Iext(int nbpop,int nPrtr, double I, string &path) {
+void CreateDir_Iext(int nbpop, int nPrtr, double I, string &path) {
 
   char cI[10] ;
   sprintf(cI,"%0.4f",I) ;
@@ -569,7 +481,30 @@ void CreateDir_Iext(int nbpop,int nPrtr, double I, string &path) {
   string spop = popList[nPrtr] ;
 
   string mkdirp = "mkdir -p " ;
-  path = path + "/Prtr_" + spop + "/Iext_" + spop + sI ;
+  
+  switch(IF_GAUSS) {
+    
+  case 0 :
+    path = path + "/DeltaPrtr/Iext_" + spop + sI ;
+    break ;
+
+  case 1 :
+    path = path + "/GaussPrtr/Iext_" + spop + sI ;
+    break ;
+
+  case 2 :
+    path = path + "/DeltaGaussPrtr/Iext_" + spop + sI ;
+    break ;
+
+  default :
+    path = path + "/DeltaPrtr/Iext_" + spop + sI ;
+    break ;
+
+  }    
+
+  if(IF_TIMECOURSE)
+    path += "/TIMECOURSE" ;
+
   mkdirp += path ;
 
   const char * cmd = mkdirp.c_str();
@@ -585,44 +520,63 @@ void CreateDir_Iext(int nbpop,int nPrtr, double I, string &path) {
 
 ///////////////////////////////////////////////////////////////////////
 
-void nbNeurons(int nbpop, int &N, int* &Nk) {
-  N = N*10000 ;
-  /* N = N*2500 ; */
+void CreateDir_JabLoop(string &path,double Jab) {
+  
+  string mkdirp = "mkdir -p " ;
+ 
+  char cJab[10] ;
+  sprintf(cJab,"%0.4f",Jab) ;
+  string sJab = string(cJab) ;
+  
+  string popList[4] = {"e","i","s","x"} ;
+  string strAx = popList[Ax] ;
+  string strBx = popList[By] ;
 
-  Nk = new int [nbpop]() ;
+  path += "/J" + strAx + strBx + sJab ; 
+  mkdirp += path ; 
+
+  const char * cmd = mkdirp.c_str();
+  const int dir_err = system(cmd);
+
+  if(-1 == dir_err) {
+    cout << "error creating directories" << endl ;
+  }
+  
+  cout << "Created directory : " ;
+  cout << path << endl ;
+}
+
+///////////////////////////////////////////////////////////////////////
+
+void nbNeurons(int nbpop, unsigned long &N, unsigned long* &Nk) {
+  N = (unsigned long) N*nbPref ;
+  
+  Nk = new unsigned long [nbpop]() ;
   for(int i=0;i<nbpop;i++)
     Nk[i] = N/nbpop ;
 
   if(IF_Nk) {
     if(nbpop==2) {
-      Nk[0]= int(N*80./100.) ;
-      Nk[1]= int(N*20./100.) ;
+      Nk[0]= (unsigned long) (N*80./100.) ;
+      Nk[1]= (unsigned long) (N*20./100.) ;
     }
     if(nbpop==3) {
-      Nk[0]= int(N*70./100.) ;
-      Nk[1]= int(N*15/100.) ;
-      Nk[2]= int(N*15./100.) ;
-
-      /* Nk[0]= int(N/3.) ; */
-      /* Nk[1]= int(N/3.*25./100.) ; */
-      /* Nk[2]= int(N/3.*75./100.) ; */
-
-      /* Nk[0]= int(N/3.) ; */
-      /* Nk[1]= int(N/3.*90./100.) ; */
-      /* Nk[2]= int(N/3.*10./100.) ; */
+      Nk[0]= (unsigned long) (N*70./100.) ;
+      Nk[1]= (unsigned long) (N*15/100.) ;
+      Nk[2]= (unsigned long) (N*15./100.) ;
     }
     if(nbpop==4) {
-      Nk[0]= int(N*70./100.) ; 
-      Nk[1]= int(N*10./100.) ; 
-      Nk[2]= int(N*10./100.) ; 
-      Nk[3]= int(N*10./100.) ; 
+      Nk[0]= (unsigned long) (N*75./100.) ; 
+      Nk[1]= (unsigned long) 6400 ;
+      Nk[2]= (unsigned long) 6400 ;
+      Nk[3]= (unsigned long) 6400 ;
     }
   }
 
 }
 
-void cptNeurons(int nbpop, int *Nk, int *&Cpt) {
-  Cpt = new int [nbpop+1]() ;
+void cptNeurons(int nbpop, unsigned long *Nk, unsigned long* &Cpt) {
+  Cpt = new unsigned long [nbpop+1]() ;
   
   for(int i=0;i<nbpop+1;i++) { 
     for(int j=0;j<i;j++) 
@@ -634,7 +588,7 @@ void cptNeurons(int nbpop, int *Nk, int *&Cpt) {
 
 ///////////////////////////////////////////////////////////////////////
 
-void Import_Ring_Orientations(int nbpop, int N, double K, vector<double> &phi){
+void Import_Ring_Orientations(int nbpop, unsigned long N, double K, vector<double> &phi){
 
   string Jpath = "../" ;
 

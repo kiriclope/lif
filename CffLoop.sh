@@ -1,67 +1,56 @@
 #!/bin/bash
 
-S=0
-V=0
 
 if [ -z "$1" ]; then
     echo "Network"
-    read -p "dir nbpop N" dir nbpop N
-    read -p "dt duration Tst Tw g" dt duration Tst Tw g
-    read -p "E I S V" E I S V
+    read -p "dir nbpop N k g" dir nbpop N k g
 else
-    read dir nbpop N k dt duration Tst Tw g <<<  "$1 $2 $3 $4 $5 $6 $7 $8 $9"
+    read dir nbpop N k g <<<  "$1 $2 $3 $4 $5"
 
     if [ "$nbpop" = 4 ]; then 
-	read E I S V Tme Tmi Tms Tmv CrecE CrecI CrecS CrecV Cff dCff Cffmax <<< "${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21} ${22} ${23} ${24}"
+	read I CrecE CrecI CrecS CrecV Cffmin dCff Cffmax Prtr <<< "${6} ${7} ${8} ${9} ${10} ${11} ${12} ${13} ${14}"
     fi
 
     if [ "$nbpop" = 3 ]; then 
-	read E I S Tme Tmi Tms CrecE CrecI CrecS Cff dI Imax <<< "${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20} ${21}"
+	read I CrecE CrecI CrecS Cffmin dCff Cffmax <<< "${6} ${7} ${8} ${9} ${10} ${11} ${12}"
     fi
 
     if [ "$nbpop" = 2 ]; then 
-	read E I Tme Tmi CrecE CrecI Cff dCff Cffmax <<< "${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18}"
+	read I CrecE CrecI Cffmin dCff Cffmax <<< "${6} ${7} ${8} ${9} ${10} ${11} "
     fi
 
     if [ "$nbpop" = 1 ]; then 
-	read I Tmi CrecI Cff dI Imax <<< "${10} ${11} ${12} ${13} ${14} ${15}"
+	read I CrecI Cffmin dCff Cffmax <<< "${6} ${7} ${8} ${9} ${10}"
     fi
 
 fi
 
-export $LANG=en_US
-
-Cffmin=$Cff
+LANG=en_US
 
 echo Cffmin$Cffmin dCff$dCff Cffmax$Cffmax
 for Cff in $(seq $Cffmin $dCff $Cffmax); do
     
-    DIRECTORY=$(printf "../%dpop/Network/%s/N%d/K%d/g%.2f/Prtr_I/Iext_I%.4f/Space/CrecE%.2fCrecI%.2fCff%.2f" "$nbpop" "$dir" "$N" "$k" "$g" "$I" "$CrecE" "$CrecI" "$Cff")
+    DIRECTORY=$(printf "../Simulations/%dpop/%s/N%d/K%d/g%.2f/Iext%s_%.4f/Space/Crec4%.2fCrecI%.4fCff%.2f" "$nbpop" "$dir" "$N" "$k" "$g" "$Prtr" "$I" "$CrecE" "$CrecI" "$Cff")
     
     if [ ! -d "$DIRECTORY" ]; then
         
 	if [ "$nbpop" = 4 ]; then 
-	    screen -dmS IF${nbpop}pop${dir}N${N}K${k}g${g}I${I} ./GaussIext.out $dir $nbpop $N $k $dt $duration $Tst $Tw $g $E $I $S $V $Tme $Tmi $Tms $Tmv $CrecE $CrecI $CrecS $CrecV $Cff
+	    screen -dmS LIFspace_${dir}_N${N}K${k}Iext${Prtr}_${I}CrecE${CrecE}CrecI${CrecI}CrecS${CrecS}CrecV${CrecV}Cff${Cff} ./IextRing2D${Prtr}.out $dir $nbpop $N $k $g $I $CrecE $CrecI $CrecS $CrecV $Cff
 	fi
-
-	# if [ "$nbpop" = 4 ]; then 
-	#     screen -dmS IF${nbpop}pop${dir}N${N}K${k}g${g}I${I} ./GaussIextSOM.out $dir $nbpop $N $k $dt $duration $Tst $Tw $g $E $I $S $V $Tme $Tmi $Tms $Tmv $CrecE $CrecI $CrecS $CrecV $Cff
-	# fi
 	
 	if [ "$nbpop" = 3 ]; then 
-	    screen -dmS IF${nbpop}pop${dir}N${N}K${k}g${g}I${I} ./GaussFFIext.out $dir $nbpop $N $k $dt $duration $Tst $Tw $g $E $I $S $Tme $Tmi $Tms $CrecE $CrecI $CrecS $Cff
+	    screen -dmS LIFspace_${dir}_N${N}K${k}Iext${I}CrecE${CrecE}CrecI${CrecI}CrecS${CrecS}Cff${Cff} ./a.out $dir $nbpop $N $k $g $I $CrecE $CrecI $CrecS $Cff
 	fi
 	
 	if [ "$nbpop" = 2 ]; then 
-	    # screen -dmS LIFspace_N${N}K${k}Iext${I}CrecE${CrecE}CrecI${CrecI}Cff${Cff} ./GaussOpsNkIext.out $dir $nbpop $N $k $dt $duration $Tst $Tw $g $E $I $Tme $Tmi $CrecE $CrecI $Cff
-	    screen -dmS LIFspace_N${N}K${k}Iext${I}CrecE${CrecE}CrecI${CrecI}Cff${Cff} ./GaussNkIext.out $dir $nbpop $N $k $dt $duration $Tst $Tw $g $E $I $Tme $Tmi $CrecE $CrecI $Cff
+	    screen -dmS LIFspace_${dir}_N${N}K${k}Iext${I}CrecE${CrecE}CrecI${CrecI}Cff${Cff} ./d.out $dir $nbpop $N $k $g $I $CrecE $CrecI $Cff
 	fi
 	
 	if [ "$nbpop" = 1 ]; then 
-	    screen -dmS LIFspace_N${N}K${k}Iext${I}CrecE${CrecE}CrecI${CrecI}Cff${Cff} ./ifspace1D_Iext.out $dir $nbpop $N $k $dt $duration $Tst $Tw $g $I $Tmi $CrecI $Cff
+	    screen -dmS LIFspace_${dir}_N${N}K${k}Iext${I}CrecE${CrecE}CrecI${CrecI}Cff${Cff} ./a.out $dir $nbpop $N $k $g $I $CrecI $Cff
 	fi
 	
-	echo LIFspace_N${N}K${k}Iext${I}CrecE${CrecE}CrecI${CrecI}Cff${Cff} $DIRECTORY "Running ..."
+	echo LIFspace_${dir}_N${N}K${k}Iext${Prtr}_${I}CrecE${CrecE}CrecI${CrecI}Cff${Cff} "Running ..."
     else
 	echo I$I $DIRECTORY "Folder already exists ..."
     fi
