@@ -75,7 +75,10 @@ void CreateDir_SpaceCrec(int nbpop,string &path,unsigned long N,double* Crec) {
   if(PROFILE==1) {
     cout  << "O( sqrt(K) ) Cosine interactions " << endl ;
     if(DIM==1)
-      path += "/Ring/" ;
+      if(IF_SPEC)
+	path += "/Ring/Spec/" ;
+      else
+	path += "/Ring/" ;
     else
       path += "/Ring2D/" ;
   }
@@ -613,42 +616,47 @@ void External_Input(int nbpop, unsigned long N, unsigned long* nbN, double K, do
 
   for(int i=0;i<nbpop;i++)
     for(unsigned long j=0;j<nbN[i];j++) 
-      X[i][j] = L * fmod( double(j), double( nbN[i]) ) / ( double( nbN[i] ) ) ;
+      X[i][j] = L * fmod( double(j), double( nbN[i]) - 1.0) / ( double( nbN[i] ) - 1.0 ) ;
     
   double p = 1.0 ;
   
   cout << "Baseline " ;
   for(int i=0;i<nbpop;i++)
-    cout << IextBL[i]/sqrt(K)/m0 << " " ;
+    cout << IextBL[i]/sqrt(K)/m0/(Vth-Vr) << " " ;
 
   if(abs(Iext[ndI]-IextBL[ndI])<=.001) {
-    cout << endl ;
+    if(IF_GAUSS==-1) {
+      cout << "| FeedForward On " << endl ;       
+      for(int i=0;i<nbpop;i++)
+	for(unsigned long j=0;j<nbN[i];j++) 
+	  Jext[i][j] = IextBL[i] * Cff * cos( 2. * ( X[i][j] - X[i][nbN[i]/2-1] - PHI0 ) ) ; 
+    }
+    else
+      cout << endl ;
   }
   else {
     p = ( Iext[ndI] - IextBL[ndI] ) ; 
     
     cout << "| Perturbation " ;
     for(int i=0;i<nbpop;i++)
-      cout << Iext[i]/sqrt(K)/m0 - IextBL[i]/sqrt(K)/m0 << " " ;
+      cout << Iext[i]/sqrt(K)/m0/(Vth-Vr) - IextBL[i]/sqrt(K)/m0/(Vth-Vr) << " " ;
     cout << endl ;
 
     for(unsigned long j=0;j<nbN[ndI];j++) { 
-
+      
       switch(IF_GAUSS) {
 	
       case 0 :
-	if( abs( X[ndI][j]-X[ndI][nbN[ndI]/2-1] ) <= Cff / 2.0 ) {
+	if( abs( X[ndI][j]-X[ndI][nbN[ndI]/2-1] ) <= Cff / 2.0 ) 
 	  Jext[ndI][j] = p ; 
-	  // Jext[0][j] = - .75 * p ;
-	}
 	else 
-	  Jext[ndI][j] = 0. ; 
-	break ;
-      
+	  Jext[ndI][j] = 0. ;  
+	break ; 
+	
       case 1 :
 	
 	if( abs( X[ndI][j]-X[ndI][nbN[ndI]/2-1] ) <= 4.0 * Cff )
-	  Jext[ndI][j] = p*PeriodicGaussian(X[ndI][j],X[ndI][nbN[ndI]/2-1],Cff) ;
+	  Jext[ndI][j] = p*PeriodicGaussian(X[ndI][j],X[ndI][nbN[ndI]/2-1],Cff) / sqrt(K) ;
 	else
 	  Jext[ndI][j] = 0. ;
 	break ;
@@ -658,7 +666,7 @@ void External_Input(int nbpop, unsigned long N, unsigned long* nbN, double K, do
 	if( abs(X[ndI][j]-X[ndI][nbN[ndI]/2-1] ) <= Cff )
 	  Jext[ndI][j] = p ; // half height of the Gaussian
 	else
-	  if( abs(X[ndI][j]-X[ndI][nbN[ndI]/2-1] ) <= 4.0 * Cff )
+	  if( abs(X[ndI][j]-X[ndI][nbN[ndI]/2-1] ) <= 4.0 * Cff ) 
 	    Jext[ndI][j] = p*PeriodicGaussian(X[ndI][j],X[ndI][nbN[ndI]/2-1],Cff) / ( exp(- 1.0 / 2.0) / sqrt(2.0*M_PI) / Cff ) ; 
 	  else 
 	    Jext[ndI][j] = 0. ; 

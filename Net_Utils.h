@@ -100,7 +100,7 @@ void Set_Parameters(int argc , char** argv, string &dir, int &nbpop, unsigned lo
     N = (unsigned long) atoi(argv[3]) ;
     K = (double) atof(argv[4]) ;
     g = (double) atof(argv[5]) ;
-
+    
     getIextBL(nbpop,dir,IextBL) ; 
     Iext = new double [nbpop] ;      
  
@@ -207,14 +207,15 @@ void Import_Synaptic_Parameters(int nbpop,double** &Tsyn,string dir) {
 	  Tsyn[i][j] = 2. ; 
       }
     if(nbpop==4) {
-      Tsyn[0][0] = 4 ;
-      Tsyn[3][0] = 4 ;
-      Tsyn[1][2] = 4 ;
-      Tsyn[3][2] = 4 ;
-      Tsyn[2][3] = 4 ;
+      Tsyn[0][0] = 4 ; 
+      Tsyn[3][0] = 4 ; 
+      
+      Tsyn[1][2] = 4 ; 
+      Tsyn[3][2] = 4 ; 
 
-      Tsyn[0][3] = 4 ;
-      Tsyn[1][3] = 4 ;
+      Tsyn[0][3] = 4 ; 
+      Tsyn[2][3] = 4 ; 
+      Tsyn[1][3] = 4 ; 
     }
   }
   
@@ -235,6 +236,20 @@ void Import_Connectivity_Matrix(int nbpop, unsigned long N, string Jpath, int* &
   string nbpath = Jpath ;
   string idxpath = Jpath ;
   string Idpath = Jpath ;
+
+  char cShared[10] ;
+  sprintf(cShared,"%0.2f",PROP_SHARED) ;
+  string sShared = string(cShared) ;
+
+  char cCluster[10] ;
+  sprintf(cCluster,"%0.2f",CLUSTER_SIZE) ;
+  string sCluster = string(cCluster) ;
+  
+  if(IF_SHARED) {
+    nbpath += "/Shared" + sShared + "/Cluster" + sCluster ;
+    idxpath += "/Shared" + sShared + "/Cluster" + sCluster ;
+    Idpath += "/Shared" + sShared + "/Cluster" + sCluster ;
+  }    
   
   if(IF_Nk) {
     nbpath += "/nbPost_Nk.dat" ;
@@ -391,7 +406,7 @@ void Check_Connectivity_Matrix(string Jpath,int nbpop, unsigned long N, double K
 
 ///////////////////////////////////////////////////////////////////////
 
-void Save_Parameters(string dir, int nbpop, unsigned long N, unsigned long *Nk, double K, double** J, double *Iext, const double *Tm, double **Tsyn, string path) {
+void Save_Parameters(string dir, int nbpop, unsigned long N, unsigned long *Nk, double dt, double K, double** J, double *Iext, const double *Tm, double **Tsyn, string path) {
 
   string fparam = path + "/Param.txt" ;
   ofstream param(fparam.c_str(), ios::out | ios::ate);
@@ -465,13 +480,39 @@ void CreateDir(string dir, int nbpop, unsigned long N, double K, double g, strin
 
 }
 
+void CreateDirShared(string &path) {
+
+  char cShared[10] ;
+  sprintf(cShared,"%0.2f",PROP_SHARED) ;
+  string sShared = string(cShared) ;
+
+  char cCluster[10] ;
+  sprintf(cCluster,"%0.2f",CLUSTER_SIZE) ;
+  string sCluster = string(cCluster) ;
+  
+  path += "/Shared" + sShared + "/Cluster" + sCluster ;
+
+  string mkdirp = "mkdir -p " ;
+
+  mkdirp += path ;
+
+  const char * cmd = mkdirp.c_str();
+  const int dir_err = system(cmd);
+
+  if(-1 == dir_err) 
+    cout << "error creating directories" << endl ;
+
+  cout << "Created directory : " ;
+  cout << path << endl ;
+
+}
+
 ///////////////////////////////////////////////////////////////////////
 
 void CreateDir_Iext(int nbpop, int nPrtr, double I, string &path) {
 
   char cI[10] ;
   sprintf(cI,"%0.4f",I) ;
-
   string sI = string(cI) ;
 
   string popList[4] = {"E","I","S","V"} ;

@@ -35,7 +35,7 @@ for I in $(seq $Imin $dI $Imax); do
     if [ ! -d "$DIRECTORY" ]; then
         
 	if [ "$nbpop" = 4 ]; then 
-	    screen -dmS LIFspace_${dir}_N${N}K${k}Iext${Prtr}_${I}CrecE${CrecE}CrecI${CrecI}CrecS${CrecS}CrecV${CrecV}Cff${Cff} ./IextRing2D${Prtr}.out $dir $nbpop $N $k $g $I $CrecE $CrecI $CrecS $CrecV $Cff
+	    screen -dmS LIFspace_${dir}_N${N}K${k}Iext${Prtr}_${I}CrecE${CrecE}CrecI${CrecI}CrecS${CrecS}CrecV${CrecV}Cff${Cff} ./Iext4pop2D${Prtr}.out $dir $nbpop $N $k $g $I $CrecE $CrecI $CrecS $CrecV $Cff
 	fi
 	
 	if [ "$nbpop" = 3 ]; then 
@@ -43,7 +43,7 @@ for I in $(seq $Imin $dI $Imax); do
 	fi
 	
 	if [ "$nbpop" = 2 ]; then 
-	    screen -dmS LIFspace_${dir}_N${N}K${k}Iext${I}CrecE${CrecE}CrecI${CrecI}Cff${Cff} ./IextRing2D_EI.out $dir $nbpop $N $k $g $I $CrecE $CrecI $Cff
+	    screen -dmS LIFspace_${dir}_N${N}K${k}Iext${I}CrecE${CrecE}CrecI${CrecI}Cff${Cff} ./Iext2pop2DI.out $dir $nbpop $N $k $g $I $CrecE $CrecI $Cff
 	fi
        
 	if [ "$nbpop" = 1 ]; then 

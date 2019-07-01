@@ -6,11 +6,11 @@ if [ -z "$1" ]; then
     read -p "dI JabMin dJab JabMax" <<< "${6} ${7} ${8} ${9}"
 else
     read dir nbpop N k g <<<  "$1 $2 $3 $4 $5"    
-    read dI JabMin dJab JabMax <<< "${6} ${7} ${8} ${9}"
+    read I JabMin dJab JabMax <<< "${6} ${7} ${8} ${9}"
 fi
 
 echo dI$dI JabMin$JabMin dJab$dJab JabMax$JabMax
 for Jab in $(seq $JabMin $dJab $JabMax); do 
-    screen -dmS LIF_${dir}_N${N}K${k}Iext${I}Jab${Jab} ./JabLoop.out $dir $nbpop $N $k $g $dI $Jab
+    screen -dmS LIF_${dir}_N${N}K${k}Iext${I}Jab${Jab} ./JabLoop.out $dir $nbpop $N $k $g $I $Jab
     echo "Running " LIF_${dir}_N${N}K${k}Iext${I}Jab${Jab} 
 done
